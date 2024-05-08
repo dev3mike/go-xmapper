@@ -1,10 +1,11 @@
 package xmapper_test
 
 import (
-	xmapper "go-xmapper/cmd"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/dev3mike/go-xmapper"
 )
 
 // Define dummy transformers
