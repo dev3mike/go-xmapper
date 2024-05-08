@@ -1,4 +1,4 @@
-# xMapper 🔄 - Dynamic Struct Transformer
+# xMapper 🔄 - Dynamic Struct Validator and Mapper
 
 Welcome to `xMapper`, where your Go structs gain superpowers! 🚀 Ever tired of manually copying fields from one struct to another? Forget about the hassle! `xMapper` automates the mapping of structs and dynamically transforms data as it flows from source to destination. It's not just about mapping; it's about transforming data effortlessly with power and style!
 
@@ -7,6 +7,7 @@ Welcome to `xMapper`, where your Go structs gain superpowers! 🚀 Ever tired of
 - **Automatic Struct Mapping**: Automate the boring stuff! Map fields between structs without writing boilerplate code.
 - **Dynamic Data Transformation**: Apply transformations to your data dynamically as it's being mapped. Upper case, add suffixes, manipulate data on the go!
 - **Extensible and Customizable**: Easily extend `xMapper` by adding your own custom transformation functions.
+- **Data Validation**: Ensure data integrity with custom validators that check data before transformation.
 - **Error Handling**: Robust error handling to let you know exactly what went wrong during the mapping process.
 
 ## Getting Started
@@ -147,6 +148,72 @@ func main() {
         // Output should be: "HELLO! HELLO!"
     }
 }
+```
+
+## Using Validators
+
+Validators in `xMapper` ensure your data meets specific criteria before it's transformed and mapped to the destination struct. Validators can prevent invalid data from being processed and provide descriptive error messages if data validation fails.
+
+### Step 1: Define Your Validators
+
+First, define each validator function. Each function must match the `ValidatorFunc` signature, which typically returns `true` if the validation passes and `false` otherwise:
+
+```go
+// Ensures the input string is not empty
+func isNotEmpty(input interface{}) bool {
+    str, ok := input.(string)
+    return ok && str != ""
+}
+
+// Checks that the input string does not contain spaces
+func doesNotContainSpaces(input interface{}) bool {
+    str, ok := input.(string)
+    return ok && !strings.Contains(str, " ")
+}
+```
+
+### Step 2: Register Your Validators
+
+Register each validator with `xMapper` just like you register transformers. This registration links the validator name with its corresponding function:
+
+```go
+func init() {
+    xmapper.RegisterValidator("isNotEmpty", isNotEmpty)
+    xmapper.RegisterValidator("doesNotContainSpaces", doesNotContainSpaces)
+}
+```
+
+### Step 3: Apply Validators to Your Structs
+
+When defining your structs, use the `validator` tag to assign validators to struct fields. Multiple validators can be applied to a single field and are separated by commas. Validators will be executed in the order they are listed:
+
+```go
+type Person struct {
+    FirstName string `json:"firstName" validator:"isNotEmpty,doesNotContainSpaces"`
+    LastName  string `json:"lastName" validator:"isNotEmpty"`
+}
+
+type Destination struct {
+    FirstName string `json:"firstName"`
+    LastName  string `json:"lastName"`
+}
+```
+
+### Step 4: Handle Validation Errors
+
+When mapping your structs, handle any validation errors that might arise. If a validation fails, `xMapper` will return an error indicating which field and validator failed:
+
+```go
+src := Person{FirstName: "John", LastName: "Doe"}
+dest := Destination{}
+
+err := xmapper.MapStructs(&src, &dest)
+if err != nil {
+    fmt.Println("Validation error:", err)
+    return
+}
+
+fmt.Println("Data successfully validated and mapped:", dest)
 ```
 
 ## Contributing
