@@ -2,6 +2,7 @@ package xmapper_test
 
 import (
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -28,6 +29,31 @@ func repeatTwice(input interface{}) interface{} {
         return str + " " + str
     }
     return input
+}
+
+// Define dummy validatos
+func isEmail(input interface{}) bool {
+	email, ok := input.(string)
+	if !ok {
+		return false
+	}
+
+	regexPattern := `^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$`
+	
+	re, err := regexp.Compile(regexPattern)
+	if err != nil {
+		return false
+	}
+	
+	return re.MatchString(email)
+}
+
+func isGmailAddress(input interface{}) bool {
+    email, ok := input.(string)
+	if !ok {
+		return false
+	}
+	return strings.HasSuffix(email, "@gmail.com")
 }
 
 // TestMapStructsBasic checks the basic functionality of mapping without transformations.
@@ -57,17 +83,17 @@ func TestMapStructsBasic(t *testing.T) {
 func TestMapStructsTransformations(t *testing.T) {
     xmapper.RegisterTransformer("toUpperCase", toUpperCase)
 
-    type Srcx struct {
+    type Src struct {
         FirstName string `json:"firstName"`
         LastName  string `json:"lastName" transformer:"toUpperCase"`
     }
-    type Destx struct {
+    type Dest struct {
         FirstName string `json:"firstName"`
         LastName  string `json:"lastName"`
     }
 
-    src := Srcx{FirstName: "John", LastName: "Doe"}
-    dest := Destx{}
+    src := Src{FirstName: "John", LastName: "Doe"}
+    dest := Dest{}
 
     err := xmapper.MapStructs(&src, &dest)
     if err != nil {
@@ -272,5 +298,78 @@ func TestNonExistentTransformer(t *testing.T) {
         if err.Error() != expectedErrorMessage {
             t.Errorf("Expected error message '%s', got '%s'", expectedErrorMessage, err.Error())
         }
+    }
+}
+
+
+// TestMapStructsValidatorsWithInvalidData checks the validation functionality.
+func TestMapStructsValidatorsWithInvalidData(t *testing.T) {
+    xmapper.RegisterValidator("isEmail", isEmail)
+
+    type Src struct {
+        Email  string `json:"email" validator:"isEmail" transformer:"toUpperCase"`
+    }
+    type Dest struct {
+        EmailAddress  string `json:"email"`
+    }
+
+    src := Src{Email: "not_a_valid_email"}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+
+    if err == nil {
+        t.Errorf("Expected error for invalid email, got nil")
+    }
+}
+
+// TestMapStructsValidatorsAndTransformersWithValidData checks the validation functionality.
+func TestMapStructsValidatorsAndTransformersWithValidData(t *testing.T) {
+    xmapper.RegisterValidator("isEmail", isEmail)
+
+    type Src struct {
+        Email  string `json:"email" validator:"isEmail" transformer:"toUpperCase"`
+    }
+    type Dest struct {
+        EmailAddress  string `json:"email"`
+    }
+
+    src := Src{Email: "test@gmail.com"}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+
+    if err != nil {
+        t.Errorf("Unexpected error for valid email: %s", err)
+    }
+
+    if dest.EmailAddress != "TEST@GMAIL.COM"{
+        t.Errorf("Failed to apply transformations correctly, got: %+v", dest)
+    }
+}
+
+// TestMapStructsValidatorsAndTransformersWithMultipleValidators checks the validation functionality.
+func TestMapStructsValidatorsAndTransformersWithMultipleValidators(t *testing.T) {
+    xmapper.RegisterValidator("isEmail", isEmail)
+    xmapper.RegisterValidator("isGmailAddress", isGmailAddress)
+
+    type Src struct {
+        Email  string `json:"email" validator:"isEmail,isGmailAddress" transformer:"toUpperCase"`
+    }
+    type Dest struct {
+        EmailAddress  string `json:"email"`
+    }
+
+    src := Src{Email: "test@gmail.com"}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+
+    if err != nil {
+        t.Errorf("Unexpected error for valid email: %s", err)
+    }
+
+    if dest.EmailAddress != "TEST@GMAIL.COM"{
+        t.Errorf("Failed to apply transformations correctly, got: %+v", dest)
     }
 }

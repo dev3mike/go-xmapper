@@ -9,12 +9,23 @@ import (
 // TransformerFunc defines the type for functions that transform data from one form to another.
 type TransformerFunc func(interface{}) interface{}
 
+// ValidatorFunc defines the type for functions that validate data.
+type ValidatorFunc func(interface{}) bool
+
 // transformerRegistry is a map that holds registered transformer functions keyed by their name.
 var transformerRegistry = map[string]TransformerFunc{}
+
+// validatorRegistry holds registered validator functions keyed by their name.
+var validatorRegistry = map[string]ValidatorFunc{}
 
 // RegisterTransformer adds a transformer function to the registry with a given name.
 func RegisterTransformer(name string, f TransformerFunc) {
     transformerRegistry[name] = f
+}
+
+// RegisterValidator adds a validator function to the registry.
+func RegisterValidator(name string, f ValidatorFunc) {
+    validatorRegistry[name] = f
 }
 
 // MapStructs maps data from source struct to destination struct using reflection.
@@ -38,11 +49,24 @@ func mapStructsRecursive(srcVal, destVal reflect.Value) error {
         return err
     }
 
+    validators, err := findValidators(srcFields)
+    if err != nil {
+        return err
+    }
+
     for i := 0; i < srcFields.NumField(); i++ {
         srcField := srcFields.Field(i)
         fieldName := getFieldName(srcFields.Type().Field(i), "json")
         if fieldName == "" {
             continue
+        }
+
+        if validatorsList, ok := validators[fieldName]; ok {
+            for _, validator := range validatorsList {
+                if !validator(srcField.Interface()) {
+                    return fmt.Errorf("validation failed for field '%s'", fieldName)
+                }
+            }
         }
 
         if destField, ok := destMap[fieldName]; ok && destField.CanSet() {
@@ -128,4 +152,35 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
     }
     destField.Set(reflect.ValueOf(valueToSet))
     return nil
+}
+
+func findValidators(fields reflect.Value) (map[string][]ValidatorFunc, error) {
+    validators := make(map[string][]ValidatorFunc)
+    for i := 0; i < fields.NumField(); i++ {
+        field := fields.Type().Field(i)
+        validatorNames := field.Tag.Get("validator")
+        if validatorNames != "" {
+            jsonName := getFieldName(field, "json")
+            validatorList, err := parseValidators(validatorNames)
+            if err != nil {
+                return nil, err
+            }
+            validators[jsonName] = validatorList
+        }
+    }
+    return validators, nil
+}
+
+func parseValidators(names string) ([]ValidatorFunc, error) {
+    nameList := strings.Split(names, ",")
+    validatorList := make([]ValidatorFunc, 0, len(nameList))
+    for _, name := range nameList {
+        name = strings.TrimSpace(name)
+        if validator, exists := validatorRegistry[name]; exists {
+            validatorList = append(validatorList, validator)
+        } else {
+            return nil, fmt.Errorf("validator '%s' not found", name)
+        }
+    }
+    return validatorList, nil
 }
