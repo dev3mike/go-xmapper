@@ -1,7 +1,6 @@
 package xmapper_test
 
 import (
-	"fmt"
 	xmapper "go-xmapper/cmd"
 	"reflect"
 	"strings"
@@ -68,7 +67,7 @@ func TestMapStructsTransformations(t *testing.T) {
 
     src := Srcx{FirstName: "John", LastName: "Doe"}
     dest := Destx{}
-    fmt.Printf("00 - TestMapStructsTransformations- got: %+v", src)
+
     err := xmapper.MapStructs(&src, &dest)
     if err != nil {
         t.Errorf("Unexpected error: %s", err)
