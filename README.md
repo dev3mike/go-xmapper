@@ -74,6 +74,81 @@ if err != nil {
 }
 ```
 
+## Using Multiple Transformers
+
+`xMapper` allows you to apply multiple transformations to a single field in sequence, which can be extremely powerful for complex data manipulation. This section guides you through setting up and using multiple transformers on a single struct field.
+
+### Step 1: Define Your Transformers
+
+First, define each transformer function. Each function should match the `TransformerFunc` signature. Here are examples of three simple transformers:
+
+```go
+// Converts a string to uppercase
+func toUpperCase(input interface{}) interface{} {
+    str, ok := input.(string)
+    if ok {
+        return strings.ToUpper(str)
+    }
+    return input
+}
+
+// Adds an exclamation mark at the end of a string
+func addExclamation(input interface{}) interface{} {
+    str, ok := input.(string)
+    if ok {
+        return str + "!"
+    }
+    return input
+}
+
+// Repeats the string twice, separated by a space
+func repeatTwice(input interface{}) interface{} {
+    str, ok := input.(string)
+    if ok {
+        return str + " " + str
+    }
+    return input
+}
+```
+
+### Step 2: Register Your Transformers
+
+Register each transformer with `xMapper` before you attempt to map your structs:
+
+```go
+func init() {
+    xmapper.RegisterTransformer("toUpperCase", toUpperCase)
+    xmapper.RegisterTransformer("addExclamation", addExclamation)
+    xmapper.RegisterTransformer("repeatTwice", repeatTwice)
+}
+```
+
+### Step 3: Set Up Your Structs
+
+Define your source and destination structs. Use the `transformer` tag to specify multiple transformers separated by commas. The transformers will be applied in the order they are listed:
+
+```go
+type Source struct {
+    Greeting string `json:"greeting" transformer:"toUpperCase,addExclamation,repeatTwice"`
+}
+
+type Destination struct {
+    Greeting string `json:"greeting"`
+}
+
+func main() {
+    src := Source{Greeting: "hello"}
+    dest := Destination{}
+
+    if err := xmapper.MapStructs(&src, &dest); err != nil {
+        fmt.Println("Error mapping structs:", err)
+    } else {
+        fmt.Println("Mapped Greeting:", dest.Greeting)
+        // Output should be: "HELLO! HELLO!"
+    }
+}
+```
+
 ## Contributing
 
 Got a cool idea for a new feature? Found a bug? We love contributions!
