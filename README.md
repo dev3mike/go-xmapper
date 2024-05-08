@@ -18,7 +18,7 @@ Here’s how to get started with `xMapper`:
 To start using `xMapper` in your Go project, simply use the `go get` command to retrieve the package:
 
 ```bash
-go get github.com/yourusername/xmapper
+go get github.com/dev3mike/go-xmapper
 ```
 
 Ensure your environment is set up with Go modules (Go 1.11+ required), and this command will manage everything for you, fetching the latest version of `xMapper` and adding it to your project's dependencies.
