@@ -1,4 +1,4 @@
-# xMapper 🗺️ - Dynamic Struct Transformer
+# xMapper 🔄 - Dynamic Struct Transformer
 
 Welcome to `xMapper`, where your Go structs gain superpowers! 🚀 Ever tired of manually copying fields from one struct to another? Forget about the hassle! `xMapper` automates the mapping of structs and dynamically transforms data as it flows from source to destination. It's not just about mapping; it's about transforming data effortlessly with power and style!
 
