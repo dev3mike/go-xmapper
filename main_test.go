@@ -368,7 +368,7 @@ func TestMapStructsValidatorsAndTransformersWithValidData(t *testing.T) {
     err := xmapper.MapStructs(&src, &dest)
 
     if err != nil {
-        t.Errorf("Unexpected error for valid email: %s", err)
+        t.Errorf("Unexpected error: %s", err)
     }
 
     if dest.EmailAddress != "TEST@GMAIL.COM"{
@@ -395,10 +395,71 @@ func TestMapStructsValidatorsAndTransformersWithMultipleValidators(t *testing.T)
     err := xmapper.MapStructs(&src, &dest)
 
     if err != nil {
-        t.Errorf("Unexpected error for valid email: %s", err)
+        t.Errorf("Unexpected error: %s", err)
     }
 
     if dest.EmailAddress != "TEST@GMAIL.COM"{
         t.Errorf("Failed to apply transformations correctly, got: %+v", dest)
+    }
+}
+
+// TestMapStructsValidatorsAndTransformersWithMultipleValidators checks the validation functionality.
+func TestDynamicVariablesWithDefaultValidatorsWithValidEmail(t *testing.T) {
+    type Src struct {
+        Email  string `json:"email" validator:"email,minLength:4" transformer:"toUpperCase"`
+    }
+    type Dest struct {
+        EmailAddress  string `json:"email"`
+    }
+
+    src := Src{Email: "test@gmail.com"}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+
+    if err != nil {
+        t.Errorf("Unexpected error: %s", err)
+    }
+
+    if dest.EmailAddress != "TEST@GMAIL.COM"{
+        t.Errorf("Failed to apply transformations correctly, got: %+v", dest)
+    }
+}
+
+// TestMapStructsValidatorsAndTransformersWithMultipleValidators checks the validation functionality.
+func TestDynamicVariablesWithDefaultValidatorsWithInvalidEmail(t *testing.T) {
+    type Src struct {
+        Email  string `json:"email" validator:"email,minLength:5" transformer:"toUpperCase"`
+    }
+    type Dest struct {
+        EmailAddress  string `json:"email"`
+    }
+
+    src := Src{Email: "test"}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+
+    if err == nil {
+        t.Errorf("Unexpected error: %s", err)
+    }
+}
+
+// TestDynamicVariablesWithDefaultValidatorsWithMaxLength checks the validation functionality.
+func TestDynamicVariablesWithDefaultValidatorsWithMaxLength(t *testing.T) {
+    type Src struct {
+        Text  string `json:"text" validator:"maxLength:5" transformer:"toUpperCase"`
+    }
+    type Dest struct {
+        Text  string `json:"email"`
+    }
+
+    src := Src{Text: "more_than_5"}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+
+    if err == nil {
+        t.Errorf("Unexpected error: %s", err)
     }
 }
