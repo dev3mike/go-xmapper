@@ -1,8 +1,10 @@
 package xmapper_test
 
 import (
+	"fmt"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -31,29 +33,55 @@ func repeatTwice(input interface{}) interface{} {
     return input
 }
 
-// Define dummy validatos
-func isEmail(input interface{}) bool {
+// Define dummy validators
+func isEmail(input interface{}, _ string) error {
 	email, ok := input.(string)
 	if !ok {
-		return false
+		return fmt.Errorf("input is not a valid string")
 	}
 
 	regexPattern := `^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$`
-	
 	re, err := regexp.Compile(regexPattern)
+
 	if err != nil {
-		return false
+		return fmt.Errorf("failed to compile regex pattern: %v", err)
 	}
-	
-	return re.MatchString(email)
+
+	if !re.MatchString(email) {
+		return fmt.Errorf("input is not a valid email")
+	}
+
+	return nil
 }
 
-func isGmailAddress(input interface{}) bool {
+func isGmailAddress(input interface{}, _ string) error {
     email, ok := input.(string)
+
 	if !ok {
-		return false
+		return fmt.Errorf("failed to map the input to a string")
 	}
-	return strings.HasSuffix(email, "@gmail.com")
+	if !strings.HasSuffix(email, "@gmail.com"){
+        return fmt.Errorf("input is not a valid gmail address")
+    }
+
+    return nil
+}
+
+func minLength(input interface{}, length string) error {
+    textInput, ok := input.(string)
+
+	if !ok {
+		return fmt.Errorf("failed to map the input to a string")
+	}
+
+    lengthInt, err := strconv.Atoi(length)
+    if err != nil {
+        return fmt.Errorf("failed to convert length to integer")
+    }
+	if len(textInput) < lengthInt {
+        return fmt.Errorf("input does not meet the minimum length requirement, minimum length is %s", length)
+    }
+    return nil
 }
 
 // TestMapStructsBasic checks the basic functionality of mapping without transformations.
@@ -352,9 +380,10 @@ func TestMapStructsValidatorsAndTransformersWithValidData(t *testing.T) {
 func TestMapStructsValidatorsAndTransformersWithMultipleValidators(t *testing.T) {
     xmapper.RegisterValidator("isEmail", isEmail)
     xmapper.RegisterValidator("isGmailAddress", isGmailAddress)
+    xmapper.RegisterValidator("minLength", minLength)
 
     type Src struct {
-        Email  string `json:"email" validator:"isEmail,isGmailAddress" transformer:"toUpperCase"`
+        Email  string `json:"email" validator:"isEmail,isGmailAddress,minLength:4" transformer:"toUpperCase"`
     }
     type Dest struct {
         EmailAddress  string `json:"email"`

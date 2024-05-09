@@ -4,19 +4,48 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/dev3mike/go-xmapper/validators"
 )
 
 // TransformerFunc defines the type for functions that transform data from one form to another.
 type TransformerFunc func(interface{}) interface{}
 
 // ValidatorFunc defines the type for functions that validate data.
-type ValidatorFunc func(interface{}) bool
+type ValidatorFunc func(interface{}, string) error
 
 // transformerRegistry is a map that holds registered transformer functions keyed by their name.
 var transformerRegistry = map[string]TransformerFunc{}
 
 // validatorRegistry holds registered validator functions keyed by their name.
 var validatorRegistry = map[string]ValidatorFunc{}
+
+func init() {
+    // Default validators
+    RegisterValidator("required", validators.RequiredValidator) // Should not be empty
+    RegisterValidator("email", validators.EmailValidator)
+    RegisterValidator("phone", validators.PhoneValidator) // International phone number format
+    RegisterValidator("strongpassword", validators.StrongPasswordValidator) // Minimum 8 characters, at least one uppercase, one lowercase, one number, and one special character
+    RegisterValidator("date", validators.DateValidator) // Date in YYYY-MM-DD format
+    RegisterValidator("time", validators.TimeValidator) // Time in HH:MM:SS format
+    RegisterValidator("datetime", validators.DatetimeValidator) // Date and time in YYYY-MM-DD HH:MM:SS format with timezone
+    RegisterValidator("url", validators.UrlValidator)
+    RegisterValidator("ip", validators.IpValidator)
+    RegisterValidator("minLength", validators.MinLengthValidator)
+    RegisterValidator("maxLength", validators.MaxLengthValidator)
+    RegisterValidator("gt", validators.GreaterThanValidator)
+    RegisterValidator("lt", validators.LessThanValidator)
+    RegisterValidator("gte", validators.GreaterThanOrEqualValidator)
+    RegisterValidator("lte", validators.LessThanOrEqualValidator)
+    RegisterValidator("range", validators.RangeValidator)
+    RegisterValidator("enum", validators.EnumValidator)
+    RegisterValidator("boolean", validators.BooleanValidator)
+    RegisterValidator("contains", validators.ContainsValidator)
+    RegisterValidator("notContains", validators.NotContainsValidator)
+    RegisterValidator("startsWidth", validators.StartsWidthValidator)
+    RegisterValidator("endsWith", validators.EndsWithValidator)
+
+}
 
 // RegisterTransformer adds a transformer function to the registry with a given name.
 func RegisterTransformer(name string, f TransformerFunc) {
@@ -43,6 +72,7 @@ func mapStructsRecursive(srcVal, destVal reflect.Value) error {
     srcFields := srcVal.Elem()
     destFields := destVal.Elem()
 
+    // Build destination field map and fetch transformers and validators
     destMap := buildDestinationFieldMap(destFields)
     transformers, err := findTransformers(srcFields)
     if err != nil {
@@ -54,6 +84,7 @@ func mapStructsRecursive(srcVal, destVal reflect.Value) error {
         return err
     }
 
+    // Iterate through each source field
     for i := 0; i < srcFields.NumField(); i++ {
         srcField := srcFields.Field(i)
         fieldName := getFieldName(srcFields.Type().Field(i), "json")
@@ -61,14 +92,16 @@ func mapStructsRecursive(srcVal, destVal reflect.Value) error {
             continue
         }
 
-        if validatorsList, ok := validators[fieldName]; ok {
-            for _, validator := range validatorsList {
-                if !validator(srcField.Interface()) {
-                    return fmt.Errorf("validation failed for field '%s'", fieldName)
+        // Execute validators for the field if any are defined
+        if fieldValidators, ok := validators[fieldName]; ok {
+            for _, validator := range fieldValidators {
+                if err := validator(srcField.Interface()); err != nil {
+                    return fmt.Errorf("validation failed for field '%s': %v", fieldName, err)
                 }
             }
         }
 
+        // If a corresponding destination field exists and can be set, apply transformers and set value
         if destField, ok := destMap[fieldName]; ok && destField.CanSet() {
             if err := setFieldValue(srcField, destField, transformers[fieldName]); err != nil {
                 return err
@@ -77,6 +110,7 @@ func mapStructsRecursive(srcVal, destVal reflect.Value) error {
     }
     return nil
 }
+
 
 // isValidStructPointer checks if the provided value is a pointer to a struct.
 func isValidStructPointer(value reflect.Value) bool {
@@ -140,7 +174,6 @@ func parseTransformers(names string) ([]TransformerFunc, error) {
     return transformerList, nil
 }
 
-// setFieldValue sets the destination field value from the source field, potentially using multiple transformers.
 func setFieldValue(srcField, destField reflect.Value, transformers []TransformerFunc) error {
     if srcField.Kind() == reflect.Struct && destField.Kind() == reflect.Struct {
         return mapStructsRecursive(srcField.Addr(), destField.Addr())
@@ -154,33 +187,45 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
     return nil
 }
 
-func findValidators(fields reflect.Value) (map[string][]ValidatorFunc, error) {
-    validators := make(map[string][]ValidatorFunc)
+func findValidators(fields reflect.Value) (map[string][]func(interface{}) error, error) {
+    validators := make(map[string][]func(interface{}) error)
     for i := 0; i < fields.NumField(); i++ {
         field := fields.Type().Field(i)
-        validatorNames := field.Tag.Get("validator")
-        if validatorNames != "" {
-            jsonName := getFieldName(field, "json")
-            validatorList, err := parseValidators(validatorNames)
-            if err != nil {
-                return nil, err
-            }
-            validators[jsonName] = validatorList
+        validatorSpec := field.Tag.Get("validator")
+        if validatorSpec == "" {
+            continue
         }
+
+        jsonName := getFieldName(field, "json")
+        fieldValidators, err := parseFieldValidators(validatorSpec)
+        if err != nil {
+            return nil, fmt.Errorf("error parsing validators for field '%s': %v", jsonName, err)
+        }
+        validators[jsonName] = fieldValidators
     }
     return validators, nil
 }
 
-func parseValidators(names string) ([]ValidatorFunc, error) {
-    nameList := strings.Split(names, ",")
-    validatorList := make([]ValidatorFunc, 0, len(nameList))
-    for _, name := range nameList {
-        name = strings.TrimSpace(name)
-        if validator, exists := validatorRegistry[name]; exists {
-            validatorList = append(validatorList, validator)
-        } else {
-            return nil, fmt.Errorf("validator '%s' not found", name)
+func parseFieldValidators(validatorSpec string) ([]func(interface{}) error, error) {
+    var validators []func(interface{}) error
+    validatorEntries := strings.Split(validatorSpec, ",")
+    for _, entry := range validatorEntries {
+        parts := strings.SplitN(entry, ":", 2)
+        validatorName := strings.TrimSpace(parts[0])
+        arg := ""
+        if len(parts) > 1 {
+            arg = strings.TrimSpace(parts[1])
         }
+
+        validatorFunc, exists := validatorRegistry[validatorName]
+        if !exists {
+            return nil, fmt.Errorf("validator '%s' not found", validatorName)
+        }
+
+        // Wrap the validator function to include its argument
+        validators = append(validators, func(value interface{}) error {
+            return validatorFunc(value, arg)
+        })
     }
-    return validatorList, nil
+    return validators, nil
 }
