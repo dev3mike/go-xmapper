@@ -25,7 +25,7 @@ func init() {
     RegisterValidator("required", validators.RequiredValidator) // Should not be empty
     RegisterValidator("email", validators.EmailValidator)
     RegisterValidator("phone", validators.PhoneValidator) // International phone number format
-    RegisterValidator("strongpassword", validators.StrongPasswordValidator) // Minimum 8 characters, at least one uppercase, one lowercase, one number, and one special character
+    RegisterValidator("strongPassword", validators.StrongPasswordValidator) // Minimum 8 characters, at least one uppercase, one lowercase, one number, and one special character
     RegisterValidator("date", validators.DateValidator) // Date in YYYY-MM-DD format
     RegisterValidator("time", validators.TimeValidator) // Time in HH:MM:SS format
     RegisterValidator("datetime", validators.DatetimeValidator) // Date and time in YYYY-MM-DD HH:MM:SS format with timezone
