@@ -65,8 +65,8 @@ func  toUpperCase(input interface{}) interface{} {
 	if ok {
 		return strings.ToUpper(str)
 	}
-		return input
-	}
+	return input
+}
 ```
 
   
