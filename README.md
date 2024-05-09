@@ -42,9 +42,7 @@ To start using `xMapper` in your Go project, simply use the `go get` command to 
   
 
 ```go
-
 go get github.com/dev3mike/go-xmapper
-
 ```
 
   
@@ -62,19 +60,12 @@ Ensure your environment is set up with Go modules (Go 1.11+ required), and this 
   
 
 ```go
-
 func  toUpperCase(input interface{}) interface{} {
-
-str, ok := input.(string)
-
-if ok {
-
-return strings.ToUpper(str)
-
-}
-
-return input
-
+	str, ok := input.(string)
+	if ok {
+		return strings.ToUpper(str)
+	}
+		return input
 }
 
 ```
