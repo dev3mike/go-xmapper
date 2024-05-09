@@ -76,9 +76,7 @@ func  toUpperCase(input interface{}) interface{} {
   
 
 ```go
-
 xmapper.RegisterTransformer("toUpperCase", toUpperCase)
-
 ```
 
   
@@ -88,37 +86,22 @@ xmapper.RegisterTransformer("toUpperCase", toUpperCase)
   
 
 ```go
-
 type  Source  struct {
-
-Name string  `json:"name" transformer:"toUpperCase"`
-
+	Name string  `json:"name" transformer:"toUpperCase"`
 }
-
-  
 
 type  Destination  struct {
-
-Name string  `json:"name"`
-
+	Name string  `json:"name"`
 }
 
-  
-
 src := Source{Name: "frodo"}
-
 dest := Destination{}
-
-  
 
 err := xmapper.MapStructs(&src, &dest)
 
 if err != nil {
-
-fmt.Println("Oops! Something went wrong:", err)
-
+	fmt.Println("Oops! Something went wrong:", err)
 }
-
 ```
 
   
@@ -134,11 +117,8 @@ Want to ensure your transformers are set up correctly? Here’s how to handle er
 ```go
 
 err := xmapper.MapStructs(&src, &dest)
-
 if err != nil {
-
-fmt.Println("Failed to map structs:", err)
-
+	fmt.Println("Failed to map structs:", err)
 }
 
 ```
@@ -164,57 +144,32 @@ First, define each transformer function. Each function should match the `Transfo
 ```go
 
 // Converts a string to uppercase
-
 func  toUpperCase(input interface{}) interface{} {
-
-str, ok := input.(string)
-
-if ok {
-
-return strings.ToUpper(str)
-
+	str, ok := input.(string)
+	if ok {
+		return strings.ToUpper(str)
+	}
+	return input
 }
-
-return input
-
-}
-
-  
 
 // Adds an exclamation mark at the end of a string
 
 func  addExclamation(input interface{}) interface{} {
-
-str, ok := input.(string)
-
-if ok {
-
-return str + "!"
-
+	str, ok := input.(string)
+	if ok {
+		return str + "!"
+	}
+	return input
 }
-
-return input
-
-}
-
-  
 
 // Repeats the string twice, separated by a space
-
 func  repeatTwice(input interface{}) interface{} {
-
-str, ok := input.(string)
-
-if ok {
-
-return str + " " + str
-
+	str, ok := input.(string)
+	if ok {
+		return str + " " + str
+	}
+	return input
 }
-
-return input
-
-}
-
 ```
 
   
@@ -228,17 +183,11 @@ Register each transformer with `xMapper` before you attempt to map your structs:
   
 
 ```go
-
 func  init() {
-
-xmapper.RegisterTransformer("toUpperCase", toUpperCase)
-
-xmapper.RegisterTransformer("addExclamation", addExclamation)
-
-xmapper.RegisterTransformer("repeatTwice", repeatTwice)
-
+	xmapper.RegisterTransformer("toUpperCase", toUpperCase)
+	xmapper.RegisterTransformer("addExclamation", addExclamation)
+	xmapper.RegisterTransformer("repeatTwice", repeatTwice)
 }
-
 ```
 
   
@@ -252,45 +201,26 @@ Define your source and destination structs. Use the `transformer` tag to specify
   
 
 ```go
-
 type  Source  struct {
-
-Greeting string  `json:"greeting" transformer:"toUpperCase,addExclamation,repeatTwice"`
-
+	Greeting string  `json:"greeting" transformer:"toUpperCase,addExclamation,repeatTwice"`
 }
-
-  
 
 type  Destination  struct {
-
-Greeting string  `json:"greeting"`
-
+	Greeting string  `json:"greeting"`
 }
-
-  
 
 func  main() {
+	src := Source{Greeting: "hello"}
+	dest := Destination{}
 
-src := Source{Greeting: "hello"}
-
-dest := Destination{}
-
-  
-
-if  err := xmapper.MapStructs(&src, &dest); err != nil {
-
-fmt.Println("Error mapping structs:", err)
-
-} else {
-
-fmt.Println("Mapped Greeting:", dest.Greeting)
-
-// Output should be: "HELLO! HELLO!"
+	if  err := xmapper.MapStructs(&src, &dest); err != nil {
+		fmt.Println("Error mapping structs:", err)
+	} else {
+		fmt.Println("Mapped Greeting:", dest.Greeting)
+		// Output should be: "HELLO! HELLO!"
+	}
 
 }
-
-}
-
 ```
 
   
@@ -329,15 +259,15 @@ You can use built-in validator as follows:
 
 **How to use built-in validators:**
 
-    type  User  struct {
-	    Name string  `json:"name" validator:"required,minLength:3,maxLength:100"`
-	    Email string  `json:"email" validator:"email,maxLength:255"`
-	    Username string  `json:"username" validator:"minLength:6,maxLength:27"`
-	    Password string  `json:"password" validator:"strongPassword"`
-	    Type string  `json:"type" validator:"enum:buyer,seller"`
-	}
-
-  
+```go
+type  User  struct {
+	Name string  `json:"name" validator:"required,minLength:3,maxLength:100"`
+	Email string  `json:"email" validator:"email,maxLength:255"`
+	Username string  `json:"username" validator:"minLength:6,maxLength:27"`
+	Password string  `json:"password" validator:"strongPassword"`
+	Type string  `json:"type" validator:"enum:buyer,seller"`
+}
+```
 
 ### Step 1: Define Your Validators
 
