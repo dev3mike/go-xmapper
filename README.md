@@ -13,6 +13,8 @@ Welcome to `xMapper`, where your Go structs gain superpowers! 🚀 Ever tired of
 
 -  **Automatic Struct Mapping**: Automate the boring stuff! Map fields between structs without writing boilerplate code.
 
+-  **Single Value Validation and Transforming**: Validate and transform individual values to ensure they meet specific criteria or format requirements before they are used.
+
 -  **Dynamic Data Transformation**: Apply transformations to your data dynamically as it's being mapped. Upper case, add suffixes, manipulate data on the go!
 
 -  **Extensible and Customizable**: Easily extend `xMapper` by adding your own custom transformation functions.
@@ -103,7 +105,20 @@ if err != nil {
 	fmt.Println("Oops! Something went wrong:", err)
 }
 ```
+  
 
+3.  **Validate/Transform single values**: 
+
+
+```go
+email := "test@example.com"
+
+transformedEmail, err := xmapper.ValidateSingleField(value, "validators:'isEmail'transformers:'toUpperCase'")
+
+if err != nil {
+	fmt.Println("Oops! Something went wrong:", err)
+}
+```
   
 
 ### Example with Error Handling
