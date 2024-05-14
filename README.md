@@ -117,7 +117,10 @@ transformedEmail, err := xmapper.ValidateSingleField(value, "validators:'isEmail
 
 if err != nil {
 	fmt.Println("Oops! Something went wrong:", err)
+	return
 }
+
+fmt.Printf("Hello %s", transformedEmail.(string))
 ```
   
 
