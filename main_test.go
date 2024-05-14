@@ -89,13 +89,14 @@ func TestMapStructsBasic(t *testing.T) {
     type Src struct {
         FirstName string `json:"firstName"`
         LastName  string `json:"lastName"`
+        PhoneNumber  string `json:"phoneNumber"`
     }
     type Dest struct {
         FirstName string `json:"firstName"`
         LastName  string `json:"lastName"`
     }
 
-    src := Src{FirstName: "John", LastName: "Doe"}
+    src := Src{FirstName: "John", LastName: "Doe", PhoneNumber: "1234567890"}
     dest := Dest{}
 
     err := xmapper.MapStructs(&src, &dest)
@@ -129,6 +130,56 @@ func TestMapStructsTransformations(t *testing.T) {
     }
     if dest.FirstName != "John" || dest.LastName != "DOE" {
         t.Errorf("Failed to apply transformations correctly, got: %+v", dest)
+    }
+}
+
+// TestValidateSingleField checks the validation functionality for a single field.
+func TestValidateSingleFieldWithAValidEmail(t *testing.T) {
+    xmapper.RegisterValidator("isEmail", isEmail)
+    xmapper.RegisterTransformer("toUpperCase", toUpperCase)
+
+    value := "test@example.com"
+
+    transformedValue, err := xmapper.ValidateSingleField(value, "validators:'isEmail'transformers:'toUpperCase'")
+
+    if err != nil {
+        t.Errorf("Unexpected error: %s", err)
+    }
+    if transformedValue != "TEST@EXAMPLE.COM" {
+        t.Errorf("Failed to apply transformations correctly, got: %+v", value)
+    }
+}
+
+// TestValidateSingleFieldWithAnInvalidEmail checks the validation functionality for a single field with an invalid email.
+func TestValidateSingleFieldWithAnInvalidEmail(t *testing.T) {
+    xmapper.RegisterValidator("isEmail", isEmail)
+    xmapper.RegisterTransformer("toUpperCase", toUpperCase)
+
+    value := "invalid-email"
+
+    _, err := xmapper.ValidateSingleField(value, "validators:'isEmail'transformers:'toUpperCase'")
+
+    if err == nil {
+        t.Error("Expected an error for invalid email, but got none")
+    }
+}
+
+// TestValidateSingleFieldWithAnInvalidEmail checks the validation functionality for a single field with an invalid email.
+func TestValidateSingleFieldWithMultipleValidators(t *testing.T) {
+    value := "abc"
+
+    _, err := xmapper.ValidateSingleField(value, "validators:'isEmail,minLength:5,maxLength:10'")
+
+    value2 := "abc@test.com"
+
+    _, err2 := xmapper.ValidateSingleField(value2, "validators:'isEmail,minLength:50,maxLength:10'")
+
+    if err == nil {
+        t.Error("Expected an error for invalid email and length constraints, but got none")
+    }
+
+    if err2 == nil {
+        t.Error("Expected an error for invalid email and length constraints, but got none")
     }
 }
 

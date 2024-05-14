@@ -67,6 +67,46 @@ func MapStructs(src, dest interface{}) error {
     return mapStructsRecursive(srcValue, destValue)
 }
 
+/**
+    * validatorAndTransformerSpec example : "validators:'arg1,arg2:value'transformers:'transformer1,transformer2'"
+**/
+func ValidateSingleField(value interface{}, validatorAndTransformerSpec string) (interface{}, error) {
+    validatorsStr, transformersStr := parseSingleFieldValidatorAndTransformerSpec(validatorAndTransformerSpec)
+
+    if len(validatorsStr) > 0 {
+        validators, err := parseFieldValidators(validatorsStr)
+
+        if err != nil {
+            return value, err
+        }
+
+
+        for _, validator := range validators {
+            if err := validator(value); err != nil {
+                return value, err
+            }
+        }
+    }
+
+    if len(transformersStr) > 0 {
+
+        transformers, err := parseTransformers(transformersStr)
+        if err != nil {
+            return value, err
+        }
+        
+        for _, transformer := range transformers {
+            value = transformer(value)
+        }
+
+    }
+
+
+
+
+    return value, nil
+}
+
 // mapStructsRecursive recursively maps data from source to destination structs.
 func mapStructsRecursive(srcVal, destVal reflect.Value) error {
     srcFields := srcVal.Elem()
@@ -228,4 +268,27 @@ func parseFieldValidators(validatorSpec string) ([]func(interface{}) error, erro
         })
     }
     return validators, nil
+}
+
+func parseSingleFieldValidatorAndTransformerSpec(input string) (string, string) {
+	var validators, transformers string
+
+	valStart := strings.Index(input, "validators:'")
+	transStart := strings.Index(input, "transformers:'")
+
+    if valStart != -1 {
+		valEnd := strings.Index(input[valStart+len("validators:'"):], "'") + valStart + len("validator:'")
+		if valEnd != -1 {
+			validators = input[valStart+len("validator:'")+1 : valEnd+1]
+		}
+	}
+
+	if transStart != -1 {
+		transEnd := strings.Index(input[transStart+len("transformers:'"):], "'") + transStart + len("transformers:'")
+		if transEnd != -1 {
+			transformers = input[transStart+len("transformers:'") : transEnd]
+		}
+	}
+
+	return validators, transformers
 }
