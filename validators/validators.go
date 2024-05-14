@@ -235,7 +235,7 @@ func EnumValidator(input interface{}, allowedValues string) error {
     if !ok {
         return fmt.Errorf("failed to map the input to a string")
     }
-    values := strings.Split(allowedValues, ",")
+    values := strings.Split(allowedValues, "-")
     for _, value := range values {
         if strings.TrimSpace(str) == strings.TrimSpace(value) {
             return nil

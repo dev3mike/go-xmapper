@@ -283,7 +283,7 @@ type  User  struct {
 	Email string  `json:"email" validator:"email,maxLength:255"`
 	Username string  `json:"username" validator:"minLength:6,maxLength:27"`
 	Password string  `json:"password" validator:"strongPassword"`
-	Type string  `json:"type" validator:"enum:buyer,seller"`
+	Type string  `json:"type" validator:"enum:buyer-seller"`
 }
 ```
 

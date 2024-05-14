@@ -408,12 +408,13 @@ func TestMapStructsValidatorsAndTransformersWithValidData(t *testing.T) {
 
     type Src struct {
         Email  string `json:"email" validator:"isEmail" transformer:"toUpperCase"`
+        Status  string `json:"status" validator:"enum:active-inactive"`
     }
     type Dest struct {
         EmailAddress  string `json:"email"`
     }
 
-    src := Src{Email: "test@gmail.com"}
+    src := Src{Email: "test@gmail.com", Status: "active"}
     dest := Dest{}
 
     err := xmapper.MapStructs(&src, &dest)
