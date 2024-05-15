@@ -216,6 +216,23 @@ func parseTransformers(names string) ([]TransformerFunc, error) {
 }
 
 func setFieldValue(srcField, destField reflect.Value, transformers []TransformerFunc) error {
+    // Handle pointers
+    if srcField.Kind() == reflect.Ptr {
+        if srcField.IsNil() {
+            // Set destination field to nil if source is nil
+            destField.Set(reflect.Zero(destField.Type()))
+            return nil
+        }
+        srcField = srcField.Elem()
+    }
+    if destField.Kind() == reflect.Ptr {
+        if destField.IsNil() {
+            // Initialize destination pointer if it's nil
+            destField.Set(reflect.New(destField.Type().Elem()))
+        }
+        destField = destField.Elem()
+    }
+
     if srcField.Kind() == reflect.Struct && destField.Kind() == reflect.Struct {
         return mapStructsRecursive(srcField.Addr(), destField.Addr())
     }
@@ -310,6 +327,7 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
     destField.Set(reflect.ValueOf(valueToSet))
     return nil
 }
+
 
 
 func findValidators(fields reflect.Value) (map[string][]func(interface{}) error, error) {

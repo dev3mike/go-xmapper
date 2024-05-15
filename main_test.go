@@ -654,3 +654,144 @@ func TestMapJsonToStruct(t *testing.T) {
         t.Errorf("Failed to map JSON string to struct correctly, got: %+v, want: %+v", dest.Tag, expectedTag)
     }
 }
+
+// TestMappingStringPointers checks the mapping functionality for string pointers.
+func TestMappingStringPointers(t *testing.T) {
+    type Src struct {
+        Text string `json:"text"`
+    }
+    type Dest struct {
+        Text *string `json:"text"`
+    }
+
+    // Test with non-empty source text
+    srcText := "example_text"
+    src := Src{Text: srcText}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Errorf("Unexpected error during mapping: %s", err)
+    }
+
+    if dest.Text == nil || *dest.Text != srcText {
+        t.Errorf("Expected dest.Text to be %s, but got %v", srcText, dest.Text)
+    }
+
+    // Test with empty source text
+    srcEmptyText := ""
+    src = Src{Text: srcEmptyText}
+    dest = Dest{}
+
+    err = xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Errorf("Unexpected error during mapping with empty text: %s", err)
+    }
+
+    if dest.Text == nil || *dest.Text != srcEmptyText {
+        t.Errorf("Expected dest.Text to be an empty string, but got %v", dest.Text)
+    }
+}
+
+
+// TestMappingFromPointerString checks the mapping functionality from a string pointer in the source struct to a regular string in the destination struct.
+func TestMappingFromPointerString(t *testing.T) {
+    type Src struct {
+        Text *string `json:"text"`
+    }
+    type Dest struct {
+        Text string `json:"text"`
+    }
+
+    // Test with non-empty source text
+    srcText := "example_text"
+    src := Src{Text: &srcText}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Fatalf("Unexpected error during mapping: %s", err)
+    }
+
+    if dest.Text != srcText {
+        t.Errorf("Expected dest.Text to be %s, but got %v", srcText, dest.Text)
+    }
+
+    // Test with empty source text
+    emptyText := ""
+    src = Src{Text: &emptyText}
+    dest = Dest{}
+
+    err = xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Fatalf("Unexpected error during mapping with empty text: %s", err)
+    }
+
+    if dest.Text != emptyText {
+        t.Errorf("Expected dest.Text to be an empty string, but got %v", dest.Text)
+    }
+
+    // Test with nil source text pointer
+    src = Src{Text: nil}
+    dest = Dest{}
+
+    err = xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Fatalf("Unexpected error during mapping with nil text: %s", err)
+    }
+
+    if dest.Text != "" {
+        t.Errorf("Expected dest.Text to be an empty string, but got %v", dest.Text)
+    }
+}
+
+// TestMappingBetweenPointerStrings checks the mapping functionality from a string pointer in the source struct to a string pointer in the destination struct.
+func TestMappingBetweenPointerStrings(t *testing.T) {
+    type Src struct {
+        Text *string `json:"text"`
+    }
+    type Dest struct {
+        Text *string `json:"text"`
+    }
+
+    // Test with non-empty source text
+    srcText := "example_text"
+    src := Src{Text: &srcText}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Fatalf("Unexpected error during mapping: %s", err)
+    }
+
+    if dest.Text == nil || *dest.Text != srcText {
+        t.Errorf("Expected dest.Text to be %s, but got %v", srcText, dest.Text)
+    }
+
+    // Test with empty source text
+    emptyText := ""
+    src = Src{Text: &emptyText}
+    dest = Dest{}
+
+    err = xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Fatalf("Unexpected error during mapping with empty text: %s", err)
+    }
+
+    if dest.Text == nil || *dest.Text != emptyText {
+        t.Errorf("Expected dest.Text to be an empty string, but got %v", dest.Text)
+    }
+
+    // Test with nil source text pointer
+    src = Src{Text: nil}
+    dest = Dest{}
+
+    err = xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Fatalf("Unexpected error during mapping with nil text: %s", err)
+    }
+
+    if dest.Text != nil {
+        t.Errorf("Expected dest.Text to be nil, but got %v", dest.Text)
+    }
+}
