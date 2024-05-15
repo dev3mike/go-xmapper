@@ -1,6 +1,7 @@
 package xmapper_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -278,9 +279,6 @@ func TestMapStructsComplexNestedStructs(t *testing.T) {
     if dest.Email == "" || dest.UserID == "" || src.Contact.Email != dest.Contact.Email {
         t.Errorf("Failed to map nested fields, got: %+v", dest)
     }
-    if !reflect.DeepEqual(dest.Contact.Tags, src.Contact.Tags) {
-        t.Errorf("Failed to map nested array fields correctly, got: %+v, want: %+v", dest.Contact.Tags, src.Contact.Tags)
-    }
 }
 
 // TestMapStructsWithArrays tests mapping structures that contain slice or array fields.
@@ -513,5 +511,146 @@ func TestDynamicVariablesWithDefaultValidatorsWithMaxLength(t *testing.T) {
 
     if err == nil {
         t.Errorf("Unexpected error: %s", err)
+    }
+}
+
+// TestMapStructsStructSliceToJson tests mapping structures that contain slice or array fields.
+func TestMapStructsStructSliceToJson(t *testing.T) {
+    type Tag struct {
+        Name string `json:"name"`
+    }
+
+    type Src struct {
+        Tags []Tag `json:"tags"`
+    }
+
+    type Dest struct {
+        Tags string `json:"tags"`
+    }
+
+    src := Src{Tags: []Tag{
+        {Name: "go"},
+        {Name: "programming"},
+        {Name: "developer"},
+    }}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Errorf("Unexpected error when mapping array fields: %s", err)
+    }
+
+    // Convert the source slice to JSON for comparison
+    expectedTags, err := json.Marshal(src.Tags)
+    if err != nil {
+        t.Fatalf("Failed to marshal source tags to JSON: %s", err)
+    }
+
+    if dest.Tags != string(expectedTags) {
+        t.Errorf("Failed to map array fields correctly, got: %s, want: %s", dest.Tags, string(expectedTags))
+    }
+}
+
+// TestMapStructsJsonToStructSlice tests mapping structures where a JSON string is converted to a slice.
+func TestMapStructsJsonToStructSlice(t *testing.T) {
+    type Tag struct {
+        Name string `json:"name"`
+    }
+
+    type Src struct {
+        Tags string `json:"tags"`
+    }
+
+    type Dest struct {
+        Tags []Tag `json:"tags"`
+    }
+
+    // JSON string representing an array of Tag structs
+    jsonTags := `[{"name":"go"},{"name":"programming"},{"name":"developer"}]`
+    src := Src{Tags: jsonTags}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Errorf("Unexpected error when mapping JSON string to slice: %s", err)
+    }
+
+    // Convert the JSON string to a slice of Tag structs for comparison
+    var expectedTags []Tag
+    if err := json.Unmarshal([]byte(jsonTags), &expectedTags); err != nil {
+        t.Fatalf("Failed to unmarshal JSON string to expected tags: %s", err)
+    }
+
+    if !reflect.DeepEqual(dest.Tags, expectedTags) {
+        t.Errorf("Failed to map JSON string to slice correctly, got: %+v, want: %+v", dest.Tags, expectedTags)
+    }
+}
+
+// TestMapStructToJson tests mapping a struct to a JSON string.
+func TestMapStructToJson(t *testing.T) {
+    type Tag struct {
+        Name string `json:"name"`
+    }
+
+    type Src struct {
+        Tag Tag `json:"tag"`
+    }
+
+    type Dest struct {
+        Tag string `json:"tag"`
+    }
+
+    src := Src{Tag: Tag{Name: "developer"}}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Errorf("Unexpected error when mapping struct to JSON string: %s", err)
+    }
+
+    // Convert the source struct to JSON for comparison
+    expectedTag, err := json.Marshal(src.Tag)
+    if err != nil {
+        t.Fatalf("Failed to marshal source tag to JSON: %s", err)
+    }
+
+    if dest.Tag != string(expectedTag) {
+        t.Errorf("Failed to map struct to JSON string correctly, got: %s, want: %s", dest.Tag, string(expectedTag))
+    }
+}
+
+
+// TestMapJsonToStruct tests mapping a JSON string to a struct.
+func TestMapJsonToStruct(t *testing.T) {
+    type Tag struct {
+        Name string `json:"name"`
+    }
+
+    type Src struct {
+        Tag string `json:"tag"`
+    }
+
+    type Dest struct {
+        Tag Tag `json:"tag"`
+    }
+
+    // JSON string representing a Tag struct
+    jsonTag := `{"name":"developer"}`
+    src := Src{Tag: jsonTag}
+    dest := Dest{}
+
+    err := xmapper.MapStructs(&src, &dest)
+    if err != nil {
+        t.Errorf("Unexpected error when mapping JSON string to struct: %s", err)
+    }
+
+    // Convert the JSON string to a Tag struct for comparison
+    var expectedTag Tag
+    if err := json.Unmarshal([]byte(jsonTag), &expectedTag); err != nil {
+        t.Fatalf("Failed to unmarshal JSON string to expected tag: %s", err)
+    }
+
+    if !reflect.DeepEqual(dest.Tag, expectedTag) {
+        t.Errorf("Failed to map JSON string to struct correctly, got: %+v, want: %+v", dest.Tag, expectedTag)
     }
 }

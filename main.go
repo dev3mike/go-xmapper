@@ -1,6 +1,7 @@
 package xmapper
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -219,6 +220,89 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
         return mapStructsRecursive(srcField.Addr(), destField.Addr())
     }
 
+    if srcField.Kind() == reflect.Slice && destField.Kind() == reflect.Slice {
+        destElemType := destField.Type().Elem()
+        convertedSlice := reflect.MakeSlice(destField.Type(), srcField.Len(), srcField.Cap())
+
+        for i := 0; i < srcField.Len(); i++ {
+            srcElem := srcField.Index(i)
+            convertedElem := reflect.New(destElemType).Elem()
+
+            // Convert the element recursively or use transformers if needed
+            if err := setFieldValue(srcElem, convertedElem, transformers); err != nil {
+                return err
+            }
+
+            convertedSlice.Index(i).Set(convertedElem)
+        }
+
+        destField.Set(convertedSlice)
+        return nil
+    }
+
+    // Handle JSON string to struct conversion
+    if srcField.Kind() == reflect.String && destField.Kind() == reflect.Struct {
+        jsonStr := srcField.String()
+        structValue := reflect.New(destField.Type()).Interface()
+        if err := json.Unmarshal([]byte(jsonStr), structValue); err != nil {
+            return err
+        }
+        destField.Set(reflect.ValueOf(structValue).Elem())
+        return nil
+    }
+
+    // Handle struct to JSON string conversion
+    if srcField.Kind() == reflect.Struct && destField.Kind() == reflect.String {
+        jsonBytes, err := json.Marshal(srcField.Interface())
+        if err != nil {
+            return err
+        }
+        destField.SetString(string(jsonBytes))
+        return nil
+    }
+
+    // Handle JSON string to slice conversion
+    if srcField.Kind() == reflect.String && destField.Kind() == reflect.Slice {
+        jsonStr := srcField.String()
+        sliceValue := reflect.New(destField.Type()).Interface()
+        if err := json.Unmarshal([]byte(jsonStr), sliceValue); err != nil {
+            return err
+        }
+        destField.Set(reflect.ValueOf(sliceValue).Elem())
+        return nil
+    }
+
+    // Handle slice to JSON string conversion
+    if srcField.Kind() == reflect.Slice && destField.Kind() == reflect.String {
+        jsonBytes, err := json.Marshal(srcField.Interface())
+        if err != nil {
+            return err
+        }
+        destField.SetString(string(jsonBytes))
+        return nil
+    }
+
+    // Handle string to slice of strings conversion (assuming CSV format)
+    if srcField.Kind() == reflect.String && destField.Kind() == reflect.Slice && destField.Type().Elem().Kind() == reflect.String {
+        str := srcField.String()
+        slice := strings.Split(str, ",")
+        destSlice := reflect.MakeSlice(destField.Type(), len(slice), len(slice))
+        for i, v := range slice {
+            destSlice.Index(i).Set(reflect.ValueOf(strings.TrimSpace(v)))
+        }
+        destField.Set(destSlice)
+        return nil
+    }
+
+    // Handle slice of strings to single string conversion (joining with commas)
+    if srcField.Kind() == reflect.Slice && srcField.Type().Elem().Kind() == reflect.String && destField.Kind() == reflect.String {
+        slice := srcField.Interface().([]string)
+        joinedStr := strings.Join(slice, ",")
+        destField.SetString(joinedStr)
+        return nil
+    }
+
+    // Apply transformers if any and set the value
     valueToSet := srcField.Interface()
     for _, transformer := range transformers {
         valueToSet = transformer(valueToSet)
@@ -226,6 +310,7 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
     destField.Set(reflect.ValueOf(valueToSet))
     return nil
 }
+
 
 func findValidators(fields reflect.Value) (map[string][]func(interface{}) error, error) {
     validators := make(map[string][]func(interface{}) error)

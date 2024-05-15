@@ -25,7 +25,12 @@ Welcome to `xMapper`, where your Go structs gain superpowers! 🚀 Ever tired of
 
 -  **Error Handling**: Robust error handling to let you know exactly what went wrong during the mapping process.
 
-  
+xMapper also provides powerful and flexible capabilities to automatically handle various types of conversions in Go. It can seamlessly map data between different structures, including:
+
+- **JSON to Struct**: Convert JSON strings into Go structs.
+- **Struct to JSON**: Convert Go structs into JSON strings.
+- **JSON to Slice**: Convert JSON strings into slices.
+- **Slice to JSON**: Convert slices into JSON strings.
 
 ## Getting Started
 
