@@ -260,6 +260,11 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
     // Handle JSON string to struct conversion
     if srcField.Kind() == reflect.String && destField.Kind() == reflect.Struct {
         jsonStr := srcField.String()
+
+        if len(jsonStr) == 0 {
+            jsonStr = "{}"
+        }
+
         structValue := reflect.New(destField.Type()).Interface()
         if err := json.Unmarshal([]byte(jsonStr), structValue); err != nil {
             return err
@@ -281,6 +286,11 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
     // Handle JSON string to slice conversion
     if srcField.Kind() == reflect.String && destField.Kind() == reflect.Slice {
         jsonStr := srcField.String()
+
+        if len(jsonStr) == 0 {
+            jsonStr = "{}"
+        }
+
         sliceValue := reflect.New(destField.Type()).Interface()
         if err := json.Unmarshal([]byte(jsonStr), sliceValue); err != nil {
             return err
