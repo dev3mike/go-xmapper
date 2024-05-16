@@ -795,3 +795,47 @@ func TestMappingBetweenPointerStrings(t *testing.T) {
         t.Errorf("Expected dest.Text to be nil, but got %v", dest.Text)
     }
 }
+
+
+// Define a simple struct for testing the MapJsonStruct function
+type TestProfile struct {
+    Name    string `json:"name" transformer:"toUpperCase"`
+    Age     int    `json:"age"`
+}
+
+// TestMapJsonStructSuccess tests the successful unmarshalling of a JSON string into the struct
+func TestMapJsonStructSuccess(t *testing.T) {
+    jsonStr := `{"name":"John Doe","age":30}`
+    var profile TestProfile
+
+    err := xmapper.MapJsonStruct(jsonStr, &profile)
+    if err != nil {
+        t.Errorf("MapJsonStruct failed: %s", err)
+    }
+
+    if profile.Name != "JOHN DOE" || profile.Age != 30 {
+        t.Errorf("MapJsonStruct did not correctly unmarshal the JSON. Got %v", profile)
+    }
+}
+
+// TestMapJsonStructInvalidJSON tests the function with invalid JSON input
+func TestMapJsonStructInvalidJSON(t *testing.T) {
+    jsonStr := `{"name":"John Doe", "age": "thirty"}`
+    var profile TestProfile
+
+    err := xmapper.MapJsonStruct(jsonStr, &profile)
+    if err == nil {
+        t.Errorf("MapJsonStruct should have failed on invalid JSON but did not")
+    }
+}
+
+// TestMapJsonStructNonPointer tests the function with a non-pointer target
+func TestMapJsonStructNonPointer(t *testing.T) {
+    jsonStr := `{"name":"John Doe","age":30}`
+    profile := TestProfile{}
+
+    err := xmapper.MapJsonStruct(jsonStr, profile)
+    if err == nil || err.Error() != "target must be a pointer to a struct" {
+        t.Errorf("MapJsonStruct should have failed with a non-pointer target but did not")
+    }
+}

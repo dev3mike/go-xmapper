@@ -68,6 +68,20 @@ func MapStructs(src, dest interface{}) error {
     return mapStructsRecursive(srcValue, destValue)
 }
 
+// MapJsonStruct decodes a JSON string into the provided struct pointer and applies any necessary validations and transformations
+func MapJsonStruct(jsonStr string, target interface{}) error {
+    if reflect.ValueOf(target).Kind() != reflect.Ptr {
+        return fmt.Errorf("target must be a pointer to a struct")
+    }
+
+    err := json.Unmarshal([]byte(jsonStr), target)
+    if err != nil {
+        return err
+    }
+
+    return MapStructs(target, target)
+}
+
 /**
     * validatorAndTransformerSpec example : "validators:'arg1,arg2:value'transformers:'transformer1,transformer2'"
 **/
@@ -309,7 +323,7 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
         return nil
     }
 
-    // Handle string to slice of strings conversion (assuming CSV format)
+    // Handle string to slice of strings conversion
     if srcField.Kind() == reflect.String && destField.Kind() == reflect.Slice && destField.Type().Elem().Kind() == reflect.String {
         str := srcField.String()
         slice := strings.Split(str, ",")

@@ -129,6 +129,25 @@ fmt.Printf("Hello %s", transformedEmail.(string))
 ```
   
 
+### Validate, Transform and Map JSON to Struct
+
+```go
+	type ProfileDto struct {
+		Email    string `json:"email" validators:'isEmail'transformer:"toUpperCase"`
+		Age     int    `json:"age"`
+	}
+
+
+	jsonStr := `{"email":"test@example.com","age":30}`
+    var profile ProfileDto
+
+    err := xmapper.MapJsonStruct(jsonStr, &profile)
+    if err != nil {
+        t.Errorf("MapJsonStruct failed: %s", err)
+    }
+```
+
+
 ### Example with Error Handling
 
   
