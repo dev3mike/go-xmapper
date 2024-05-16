@@ -288,7 +288,7 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
         jsonStr := srcField.String()
 
         if len(jsonStr) == 0 {
-            jsonStr = "{}"
+            jsonStr = "[]"
         }
 
         sliceValue := reflect.New(destField.Type()).Interface()
