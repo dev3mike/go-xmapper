@@ -303,17 +303,33 @@ You can use built-in validator as follows:
 
 ```go
 type  User  struct {
-	Name string  `json:"name" validator:"required,minLength:3,maxLength:100"`
-	Email string  `json:"email" validator:"email,maxLength:255"`
-	Username string  `json:"username" validator:"minLength:6,maxLength:27"`
-	Password string  `json:"password" validator:"strongPassword"`
-	Type string  `json:"type" validator:"enum:buyer-seller"`
+	Name string  `json:"name" validators:"required,minLength:3,maxLength:100"`
+	Email string  `json:"email" validators:"email,maxLength:255"`
+	Username string  `json:"username" validators:"minLength:6,maxLength:27"`
+	Password string  `json:"password" validators:"strongPassword"`
+	Type string  `json:"type" validators:"enum:buyer-seller"`
 }
 ```
 
-### Step 1: Define Your Validators
+### Validate a single struct without mapping
 
-  
+If you do not need any mapping, then you can validate the struct directly.
+
+```go
+	type User struct {
+		Email string `json:"email" validators:"email"`
+	}
+
+	user := User{Email: "test@example.com"}
+
+	// Call ValidateStruct to check validation.
+	err := xmapper.ValidateStruct(&user)
+```
+
+### Use your own validation
+If you need a custom validation logic, then you can register and use your own validator.
+
+### Step 1: Define Your Own Validators
 
 First, define each validator function. Each function must match the `ValidatorFunc` signature, which typically returns `true` if the validation passes and `false` otherwise:
 
@@ -379,8 +395,8 @@ When defining your structs, use the `validator` tag to assign validators to stru
 
 ```go
 type  Person  struct {
-	FirstName string  `json:"firstName" validator:"isNotEmpty,doesNotContainSpaces"`
-	LastName string  `json:"lastName" validator:"isNotEmpty,customMinLength:4"`
+	FirstName string  `json:"firstName" validators:"isNotEmpty,doesNotContainSpaces"`
+	LastName string  `json:"lastName" validators:"isNotEmpty,customMinLength:4"`
 }
 
 type  Destination  struct {
