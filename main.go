@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/dev3mike/go-xmapper/transformers"
 	"github.com/dev3mike/go-xmapper/validators"
 )
 
@@ -46,6 +47,16 @@ func init() {
 	RegisterValidator("startsWidth", validators.StartsWidthValidator)
 	RegisterValidator("endsWith", validators.EndsWithValidator)
 
+	// Default transformers
+	RegisterTransformer("uppercase", transformers.ToUpperCase)
+	RegisterTransformer("lowercase", transformers.ToLowerCase)
+	RegisterTransformer("trim", transformers.Trim)
+	RegisterTransformer("trimLeft", transformers.TrimLeft)
+	RegisterTransformer("trimRight", transformers.TrimRight)
+	RegisterTransformer("base64Encode", transformers.Base64Encode)
+	RegisterTransformer("base64Decode", transformers.Base64Decode)
+	RegisterTransformer("urlEncode", transformers.UrlEncode)
+	RegisterTransformer("urlDecode", transformers.UrlDecode)
 }
 
 // RegisterTransformer adds a transformer function to the registry with a given name.
@@ -130,6 +141,12 @@ func ValidateStruct(s interface{}) error {
 func validateStructRecursive(val reflect.Value) error {
 	structFields := val.Elem()
 
+	structFieldMap := buildDestinationFieldMap(structFields)
+	transformers, err := findTransformers(structFields)
+	if err != nil {
+		return err
+	}
+
 	validators, err := findValidators(structFields)
 	if err != nil {
 		return err
@@ -144,6 +161,12 @@ func validateStructRecursive(val reflect.Value) error {
 				if err := validator(field.Interface()); err != nil {
 					return fmt.Errorf("validation failed for field '%s': %v", fieldName, err)
 				}
+			}
+		}
+
+		if structField, ok := structFieldMap[fieldName]; ok && structField.CanSet() {
+			if err := setFieldValue(structField, structField, transformers[fieldName]); err != nil {
+				return err
 			}
 		}
 	}

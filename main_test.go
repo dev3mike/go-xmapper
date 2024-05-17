@@ -854,3 +854,26 @@ func TestValidateStructWithInvalidData(t *testing.T) {
 		t.Logf("Received expected error: %v", err)
 	}
 }
+
+// TestValidateStructWithValidDataAndTransformer checks the validation functionality for a single struct with transformer.
+func TestValidateStructWithValidDataAndTransformer(t *testing.T) {
+	// Define the source structure with validation tags.
+	type Src struct {
+		Name string `json:"name" validators:"required" transformers:"uppercase"`
+	}
+
+	// Create an instance of Src with invalid email.
+	src := Src{Name: "test"}
+
+	// Call ValidateStruct to check validation.
+	err := xmapper.ValidateStruct(&src)
+
+	// Check if error is returned for invalid email.
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	if src.Name != "TEST" {
+		t.Errorf("Failed to apply transformations correctly, got: %+v", src)
+	}
+}

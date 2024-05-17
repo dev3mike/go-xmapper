@@ -179,20 +179,32 @@ if err != nil {
 }
 
 ```
-
   
+
+## Default Transformers
+You can use these default transformers without a need of registering them.
+
+| Transformer       | Description                        |
+|-------------------|------------------------------------|
+| `uppercase`       | Converts text to uppercase letters |
+| `lowercase`       | Converts text to lowercase letters |
+| `trim`            | Removes whitespace from both sides of the text |
+| `trimLeft`        | Removes whitespace from the left side of the text |
+| `trimRight`       | Removes whitespace from the right side of the text |
+| `base64Encode`    | Encodes text to Base64 format      |
+| `base64Decode`    | Decodes Base64 text to original format |
+| `urlEncode`       | Encodes text to be URL-friendly    |
+| `urlDecode`       | Decodes URL-encoded text to original format |
+
+
 
 ## Using Multiple Transformers
 
-  
-
 `xMapper` allows you to apply multiple transformations to a single field in sequence, which can be extremely powerful for complex data manipulation. This section guides you through setting up and using multiple transformers on a single struct field.
 
-  
+
 
 ### Step 1: Define Your Transformers
-
-  
 
 First, define each transformer function. Each function should match the `TransformerFunc` signature. Here are examples of three simple transformers:
 
@@ -229,15 +241,10 @@ func  repeatTwice(input interface{}) interface{} {
 }
 ```
 
-  
-
-### Step 2: Register Your Transformers
-
-  
+### Step 2: Register Your Transformers 
 
 Register each transformer with `xMapper` before you attempt to map your structs:
 
-  
 
 ```go
 func  init() {
@@ -247,11 +254,8 @@ func  init() {
 }
 ```
 
-  
 
 ### Step 3: Set Up Your Structs
-
-  
 
 Define your source and destination structs. Use the `transformer` tag to specify multiple transformers separated by commas. The transformers will be applied in the order they are listed:
 
@@ -283,8 +287,6 @@ func  main() {
   
 
 ## Using Validators
-
-  
 
 Validators in `xMapper` ensure your data meets specific criteria before it's transformed and mapped to the destination struct. Validators can prevent invalid data from being processed and provide descriptive error messages if data validation fails.
 
