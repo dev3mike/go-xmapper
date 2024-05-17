@@ -116,7 +116,7 @@ func TestMapStructsTransformations(t *testing.T) {
 
 	type Src struct {
 		FirstName string `json:"firstName"`
-		LastName  string `json:"lastName" transformer:"toUpperCase"`
+		LastName  string `json:"lastName" transformers:"toUpperCase"`
 	}
 	type Dest struct {
 		FirstName string `json:"firstName"`
@@ -142,7 +142,7 @@ func TestValidateSingleFieldWithAValidEmail(t *testing.T) {
 
 	value := "test@example.com"
 
-	transformedValue, err := xmapper.ValidateSingleField(value, "validators:'isEmail'transformers:'toUpperCase'")
+	transformedValue, err := xmapper.ValidateSingleField(value, "validators:'isEmail' transformers:'toUpperCase'")
 
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
@@ -159,7 +159,7 @@ func TestValidateSingleFieldWithAnInvalidEmail(t *testing.T) {
 
 	value := "invalid-email"
 
-	_, err := xmapper.ValidateSingleField(value, "validators:'isEmail'transformers:'toUpperCase'")
+	_, err := xmapper.ValidateSingleField(value, "validators:'isEmail' transformers:'toUpperCase'")
 
 	if err == nil {
 		t.Error("Expected an error for invalid email, but got none")
@@ -222,7 +222,7 @@ func TestMapStructsNoFieldMatch(t *testing.T) {
 // TestMapStructsUnregisteredTransformer tests the handling of unregistered transformer names.
 func TestMapStructsUnregisteredTransformer(t *testing.T) {
 	type Src struct {
-		LastName string `json:"lastName" ,transformer:"nonExistent"`
+		LastName string `json:"lastName" transformers:"nonExistent"`
 	}
 	type Dest struct {
 		LastName string `json:"lastName"`
@@ -232,11 +232,8 @@ func TestMapStructsUnregisteredTransformer(t *testing.T) {
 	dest := Dest{}
 
 	err := xmapper.MapStructs(&src, &dest)
-	if err != nil {
-		t.Errorf("Expected mapping to continue despite unregistered transformer, error: %s", err)
-	}
-	if dest.LastName != "Doe" {
-		t.Errorf("Expected original value to be set when transformer is unregistered, got: %+v", dest)
+	if err == nil {
+		t.Errorf("Expected error when the transformer is not registered but got %s", err)
 	}
 }
 
@@ -333,7 +330,7 @@ func TestMultipleTransformers(t *testing.T) {
 
 	// Define test struct with transformer tags
 	type TestStruct struct {
-		Message string `json:"message" transformer:"toUpperCase,addExclamation,repeatTwice"`
+		Message string `json:"message" transformers:"toUpperCase,addExclamation,repeatTwice"`
 	}
 
 	src := TestStruct{Message: "hello"}
@@ -360,7 +357,7 @@ func TestNonExistentTransformer(t *testing.T) {
 
 	// Define a test struct that specifies a non-existent transformer
 	type TestStruct struct {
-		Message string `json:"message" transformer:"nonExistentTransformer"`
+		Message string `json:"message" transformers:"nonExistentTransformer"`
 	}
 
 	src := TestStruct{Message: "test"}
@@ -383,7 +380,7 @@ func TestMapStructsValidatorsWithInvalidData(t *testing.T) {
 	xmapper.RegisterValidator("isEmail", isEmail)
 
 	type Src struct {
-		Email string `json:"email" validators:"isEmail" transformer:"toUpperCase"`
+		Email string `json:"email" validators:"isEmail" transformers:"toUpperCase"`
 	}
 	type Dest struct {
 		EmailAddress string `json:"email"`
@@ -405,7 +402,7 @@ func TestMapStructsValidatorsAndTransformersWithValidData(t *testing.T) {
 	xmapper.RegisterTransformer("toUpperCase", toUpperCase)
 
 	type Src struct {
-		Email  string `json:"email" validators:"isEmail" transformer:"toUpperCase"`
+		Email  string `json:"email" validators:"isEmail" transformers:"toUpperCase"`
 		Status string `json:"status" validators:"enum:active-inactive"`
 	}
 	type Dest struct {
@@ -433,7 +430,7 @@ func TestMapStructsValidatorsAndTransformersWithMultipleValidators(t *testing.T)
 	xmapper.RegisterValidator("minLength", minLength)
 
 	type Src struct {
-		Email string `json:"email" validators:"isEmail,isGmailAddress,minLength:4" transformer:"toUpperCase"`
+		Email string `json:"email" validators:"isEmail,isGmailAddress,minLength:4" transformers:"toUpperCase"`
 	}
 	type Dest struct {
 		EmailAddress string `json:"email"`
@@ -456,7 +453,7 @@ func TestMapStructsValidatorsAndTransformersWithMultipleValidators(t *testing.T)
 // TestMapStructsValidatorsAndTransformersWithMultipleValidators checks the validation functionality.
 func TestDynamicVariablesWithDefaultValidatorsWithValidEmail(t *testing.T) {
 	type Src struct {
-		Email string `json:"email" validators:"email,minLength:4" transformer:"toUpperCase"`
+		Email string `json:"email" validators:"email,minLength:4" transformers:"toUpperCase"`
 	}
 	type Dest struct {
 		EmailAddress string `json:"email"`
@@ -479,7 +476,7 @@ func TestDynamicVariablesWithDefaultValidatorsWithValidEmail(t *testing.T) {
 // TestMapStructsValidatorsAndTransformersWithMultipleValidators checks the validation functionality.
 func TestDynamicVariablesWithDefaultValidatorsWithInvalidEmail(t *testing.T) {
 	type Src struct {
-		Email string `json:"email" validators:"email,minLength:5" transformer:"toUpperCase"`
+		Email string `json:"email" validators:"email,minLength:5" transformers:"toUpperCase"`
 	}
 	type Dest struct {
 		EmailAddress string `json:"email"`
@@ -498,7 +495,7 @@ func TestDynamicVariablesWithDefaultValidatorsWithInvalidEmail(t *testing.T) {
 // TestDynamicVariablesWithDefaultValidatorsWithMaxLength checks the validation functionality.
 func TestDynamicVariablesWithDefaultValidatorsWithMaxLength(t *testing.T) {
 	type Src struct {
-		Text string `json:"text" validators:"maxLength:5" transformer:"toUpperCase"`
+		Text string `json:"text" validators:"maxLength:5" transformers:"toUpperCase"`
 	}
 	type Dest struct {
 		Text string `json:"email"`
@@ -796,7 +793,7 @@ func TestMappingBetweenPointerStrings(t *testing.T) {
 
 // Define a simple struct for testing the MapJsonStruct function
 type TestProfile struct {
-	Name string `json:"name" transformer:"toUpperCase"`
+	Name string `json:"name" transformers:"toUpperCase"`
 	Age  int    `json:"age"`
 }
 

@@ -227,7 +227,7 @@ func findTransformers(fields reflect.Value) (map[string][]TransformerFunc, error
 	transformers := make(map[string][]TransformerFunc)
 	for i := 0; i < fields.NumField(); i++ {
 		field := fields.Type().Field(i)
-		transformerNames := field.Tag.Get("transformer")
+		transformerNames := field.Tag.Get("transformers")
 		if transformerNames != "" {
 			jsonName := getFieldName(field, "json")
 			transformerList, err := parseTransformers(transformerNames)

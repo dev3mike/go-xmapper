@@ -109,7 +109,7 @@ xmapper.RegisterTransformer("toUpperCase", toUpperCase)
 
 ```go
 type  Source  struct {
-	Name string  `json:"name" transformer:"toUpperCase"`
+	Name string  `json:"name" transformers:"toUpperCase"`
 }
 
 type  Destination  struct {
@@ -133,7 +133,7 @@ if err != nil {
 ```go
 email := "test@example.com"
 
-transformedEmail, err := xmapper.ValidateSingleField(value, "validators:'isEmail'transformers:'toUpperCase'")
+transformedEmail, err := xmapper.ValidateSingleField(value, "validators:'isEmail' transformers:'toUpperCase'")
 
 if err != nil {
 	fmt.Println("Oops! Something went wrong:", err)
@@ -148,7 +148,7 @@ fmt.Printf("Hello %s", transformedEmail.(string))
 
 ```go
 	type ProfileDto struct {
-		Email    string `json:"email" validators:'isEmail'transformer:"toUpperCase"`
+		Email    string `json:"email" validators:"isEmail" transformers:"toUpperCase"`
 		Age     int    `json:"age"`
 	}
 
@@ -259,7 +259,7 @@ Define your source and destination structs. Use the `transformer` tag to specify
 
 ```go
 type  Source  struct {
-	Greeting string  `json:"greeting" transformer:"toUpperCase,addExclamation,repeatTwice"`
+	Greeting string  `json:"greeting" transformers:"toUpperCase,addExclamation,repeatTwice"`
 }
 
 type  Destination  struct {
