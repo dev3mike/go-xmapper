@@ -2,6 +2,7 @@ package xmapper
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -15,6 +16,9 @@ type TransformerFunc func(interface{}) interface{}
 
 // ValidatorFunc defines the type for functions that validate data.
 type ValidatorFunc func(interface{}, string) error
+
+// ErrValidation: Validation methods return this error in case of an error, so you can use it to catch validation errors
+var ErrValidation = errors.New("ValidationError")
 
 // transformerRegistry is a map that holds registered transformer functions keyed by their name.
 var transformerRegistry = map[string]TransformerFunc{}
@@ -107,7 +111,7 @@ func ValidateSingleField(value interface{}, validatorAndTransformerSpec string) 
 
 		for _, validator := range validators {
 			if err := validator(value); err != nil {
-				return value, err
+				return value, fmt.Errorf("validation failed: %w", ErrValidation)
 			}
 		}
 	}
@@ -159,7 +163,7 @@ func validateStructRecursive(val reflect.Value) error {
 		if fieldValidators, ok := validators[fieldName]; ok {
 			for _, validator := range fieldValidators {
 				if err := validator(field.Interface()); err != nil {
-					return fmt.Errorf("validation failed for field '%s': %v", fieldName, err)
+					return fmt.Errorf("validation failed for field '%s': %w", fieldName, ErrValidation)
 				}
 			}
 		}
@@ -202,7 +206,7 @@ func mapStructsRecursive(srcVal, destVal reflect.Value) error {
 		if fieldValidators, ok := validators[fieldName]; ok {
 			for _, validator := range fieldValidators {
 				if err := validator(srcField.Interface()); err != nil {
-					return fmt.Errorf("validation failed for field '%s': %v", fieldName, err)
+					return fmt.Errorf("validation failed for field '%s': %w", fieldName, ErrValidation)
 				}
 			}
 		}

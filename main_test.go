@@ -2,6 +2,7 @@ package xmapper_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -163,6 +164,10 @@ func TestValidateSingleFieldWithAnInvalidEmail(t *testing.T) {
 
 	if err == nil {
 		t.Error("Expected an error for invalid email, but got none")
+	}
+
+	if !errors.Is(err, xmapper.ErrValidation) {
+		t.Errorf("Expected ErrValidation, got %v", err)
 	}
 }
 
@@ -850,8 +855,10 @@ func TestValidateStructWithInvalidData(t *testing.T) {
 	// Check if error is returned for invalid email.
 	if err == nil {
 		t.Errorf("Expected error for invalid email, got nil")
-	} else {
-		t.Logf("Received expected error: %v", err)
+	}
+
+	if !errors.Is(err, xmapper.ErrValidation) {
+		t.Errorf("Expected ErrValidation, got %v", err)
 	}
 }
 

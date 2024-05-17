@@ -74,6 +74,11 @@ If you do not need any mapping, then you can validate the struct directly.
 
 	// Call ValidateStruct to check validation.
 	err := xmapper.ValidateStruct(&user)
+
+	// Check error type for validation errors
+	if errors.Is(err, xmapper.ErrValidation){
+		// Return bad request or ...
+	}
 ```
   
 **Transformers**
@@ -136,6 +141,12 @@ email := "test@example.com"
 transformedEmail, err := xmapper.ValidateSingleField(value, "validators:'isEmail' transformers:'toUpperCase'")
 
 if err != nil {
+
+	// Check error type for validation errors
+	if errors.Is(err, xmapper.ErrValidation){
+		// Return bad request or ...
+	}
+
 	fmt.Println("Oops! Something went wrong:", err)
 	return
 }
@@ -158,6 +169,12 @@ fmt.Printf("Hello %s", transformedEmail.(string))
 
     err := xmapper.MapJsonStruct(jsonStr, &profile)
     if err != nil {
+
+		// Check error type for validation errors
+		if errors.Is(err, xmapper.ErrValidation){
+			// Return bad request or ...
+		}
+
         t.Errorf("MapJsonStruct failed: %s", err)
     }
 ```
@@ -175,6 +192,11 @@ Want to ensure your transformers are set up correctly? Here’s how to handle er
 
 err := xmapper.MapStructs(&src, &dest)
 if err != nil {
+	// Check error type for validation errors
+	if errors.Is(err, xmapper.ErrValidation){
+		// Return bad request or ...
+	}
+
 	fmt.Println("Failed to map structs:", err)
 }
 
@@ -196,12 +218,17 @@ You can use these default transformers without a need of registering them.
 | `urlEncode`       | Encodes text to be URL-friendly    |
 | `urlDecode`       | Decodes URL-encoded text to original format |
 
+***Example Code:***
+```go
+type  Source  struct {
+	Greeting string  `json:"greeting" transformers:"uppercase,trim"`
+}
+```
 
 
 ## Using Multiple Transformers
 
 `xMapper` allows you to apply multiple transformations to a single field in sequence, which can be extremely powerful for complex data manipulation. This section guides you through setting up and using multiple transformers on a single struct field.
-
 
 
 ### Step 1: Define Your Transformers
