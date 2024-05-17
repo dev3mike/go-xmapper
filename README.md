@@ -60,8 +60,23 @@ Ensure your environment is set up with Go modules (Go 1.11+ required), and this 
 
 ### Usage
 
-  
 
+**Validate a single struct without mapping**
+
+If you do not need any mapping, then you can validate the struct directly.
+
+```go
+	type User struct {
+		Email string `json:"email" validators:"email"`
+	}
+
+	user := User{Email: "test@example.com"}
+
+	// Call ValidateStruct to check validation.
+	err := xmapper.ValidateStruct(&user)
+```
+  
+**Transformers**
 1.  **Define Your Transformers**: Create functions that match the `TransformerFunc` signature:
 
   
@@ -309,21 +324,6 @@ type  User  struct {
 	Password string  `json:"password" validators:"strongPassword"`
 	Type string  `json:"type" validators:"enum:buyer-seller"`
 }
-```
-
-### Validate a single struct without mapping
-
-If you do not need any mapping, then you can validate the struct directly.
-
-```go
-	type User struct {
-		Email string `json:"email" validators:"email"`
-	}
-
-	user := User{Email: "test@example.com"}
-
-	// Call ValidateStruct to check validation.
-	err := xmapper.ValidateStruct(&user)
 ```
 
 ### Use your own validation
