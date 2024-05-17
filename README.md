@@ -63,11 +63,12 @@ Ensure your environment is set up with Go modules (Go 1.11+ required), and this 
 
 **Validate a single struct without mapping**
 
-If you do not need any mapping, then you can validate the struct directly.
+If you don't need any mapping, you can directly validate the struct. 
+You can also use transformers to ensure your data is clean. Exciting, isn't it?
 
 ```go
 	type User struct {
-		Email string `json:"email" validators:"email"`
+		Email string `json:"email" validators:"email" transformers:"trim,lowercase"`
 	}
 
 	user := User{Email: "test@example.com"}
