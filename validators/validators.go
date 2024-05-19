@@ -60,7 +60,7 @@ func EmailValidator(input interface{}, _ string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -79,7 +79,7 @@ func PhoneValidator(input interface{}, _ string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -96,7 +96,7 @@ func StrongPasswordValidator(input interface{}, _ string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -138,7 +138,7 @@ func DateValidator(input interface{}, _ string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -155,7 +155,7 @@ func TimeValidator(input interface{}, _ string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -172,7 +172,7 @@ func DatetimeValidator(input interface{}, _ string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -189,7 +189,7 @@ func UrlValidator(input interface{}, _ string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -206,7 +206,7 @@ func IpValidator(input interface{}, _ string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -222,7 +222,7 @@ func MinLengthValidator(input interface{}, length string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -242,7 +242,7 @@ func MaxLengthValidator(input interface{}, length string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -322,7 +322,7 @@ func EnumValidator(input interface{}, allowedValues string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -354,7 +354,7 @@ func ContainsValidator(input interface{}, allowedValues string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -373,7 +373,7 @@ func NotContainsValidator(input interface{}, disallowedValues string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
 	}
@@ -433,7 +433,7 @@ func StartsWidthValidator(input interface{}, prefix string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("input must be a string")
 	}
@@ -449,7 +449,7 @@ func EndsWithValidator(input interface{}, suffix string) error {
 		return nil
 	}
 
-	str, ok := input.(string)
+	str, ok := getString(input)
 	if !ok {
 		return fmt.Errorf("input must be a string")
 	}
@@ -497,4 +497,22 @@ func isEmptyOrNull(input interface{}) bool {
 	default:
 		return false
 	}
+}
+
+// getString attempts to convert the input to a string, returning the string and a boolean indicating success
+func getString(input interface{}) (string, bool) {
+	value := reflect.ValueOf(input)
+	if value.Kind() == reflect.Ptr {
+		if value.IsNil() {
+			return "", true
+		}
+		return getString(value.Elem().Interface())
+	}
+
+	str, ok := input.(string)
+	if !ok {
+		return "", false
+	}
+
+	return str, true
 }
