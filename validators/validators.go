@@ -42,43 +42,12 @@ func RequiredValidator(input interface{}, _ string) error {
 			return fmt.Errorf("input is required and cannot be empty")
 		}
 	case reflect.Struct:
-		for i := 0; i < val.NumField(); i++ {
-			field := val.Field(i)
-			if isZero(field) {
-				return fmt.Errorf("input is required and cannot be empty")
-			}
-		}
+		return nil
 	default:
 		return errors.New("unsupported type")
 	}
 
 	return nil
-}
-
-func isZero(v reflect.Value) bool {
-	switch v.Kind() {
-	case reflect.String:
-		return v.String() == ""
-	case reflect.Bool:
-		return !v.Bool()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return v.Int() == 0
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return v.Uint() == 0
-	case reflect.Float32, reflect.Float64:
-		return v.Float() == 0.0
-	case reflect.Slice, reflect.Array:
-		return v.Len() == 0
-	case reflect.Struct:
-		for i := 0; i < v.NumField(); i++ {
-			if !isZero(v.Field(i)) {
-				return false
-			}
-		}
-		return true
-	default:
-		return false
-	}
 }
 
 // EmailValidator checks if the input string is a valid email address
