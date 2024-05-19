@@ -21,6 +21,10 @@ func RequiredValidator(input interface{}, _ string) error {
 		if strings.TrimSpace(val.String()) == "" {
 			return fmt.Errorf("input is required and cannot be empty")
 		}
+	case reflect.Ptr:
+		if val.IsNil() {
+			return fmt.Errorf("input is required and cannot be nil")
+		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		if val.Int() == 0 {
 			return fmt.Errorf("input is required and cannot be zero")
