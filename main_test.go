@@ -171,6 +171,19 @@ func TestValidateSingleFieldWithAnInvalidEmail(t *testing.T) {
 	}
 }
 
+// TestValidateSingleFieldWithAnEmptyEmail the code should ignore the validation if the value is empty since the field is not required.
+func TestValidateSingleFieldWithAnEmptyEmail(t *testing.T) {
+	xmapper.RegisterTransformer("toUpperCase", toUpperCase)
+
+	value := ""
+
+	_, err := xmapper.ValidateSingleField(value, "validators:'email' transformers:'toUpperCase'")
+
+	if err != nil {
+		t.Errorf("Expected no error for empty email, but got one: %s", err)
+	}
+}
+
 // TestValidateSingleFieldWithAnInvalidEmail checks the validation functionality for a single field with an invalid email.
 func TestValidateSingleFieldWithMultipleValidators(t *testing.T) {
 	value := "abc"
@@ -882,5 +895,23 @@ func TestValidateStructWithValidDataAndTransformer(t *testing.T) {
 
 	if src.Name != "TEST" {
 		t.Errorf("Failed to apply transformations correctly, got: %+v", src)
+	}
+}
+
+// TestValidateStructWithOptionalField validator shoudl ignore the validation if the value is empty since the field is not required.
+func TestValidateStructWithOptionalField(t *testing.T) {
+	// Define the source structure with validation tags.
+	type Src struct {
+		Email string `json:"email" validators:"email" transformers:"uppercase"`
+	}
+
+	// Create an instance of Src with empty email.
+	src := Src{Email: ""}
+
+	// Call ValidateStruct to check validation.
+	err := xmapper.ValidateStruct(&src)
+
+	if err != nil {
+		t.Errorf("Expected no error for empty email, but got one: %s", err)
 	}
 }

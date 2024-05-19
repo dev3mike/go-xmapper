@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -11,20 +12,81 @@ import (
 	"time"
 )
 
-// RequiredValidator checks if the input string is not empty
+// RequiredValidator checks if the input is not empty for supported types
 func RequiredValidator(input interface{}, _ string) error {
-	str, ok := input.(string)
-	if !ok {
-		return fmt.Errorf("failed to map the input to a string")
+	val := reflect.ValueOf(input)
+
+	switch val.Kind() {
+	case reflect.String:
+		if strings.TrimSpace(val.String()) == "" {
+			return fmt.Errorf("input is required and cannot be empty")
+		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if val.Int() == 0 {
+			return fmt.Errorf("input is required and cannot be zero")
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		if val.Uint() == 0 {
+			return fmt.Errorf("input is required and cannot be zero")
+		}
+	case reflect.Float32, reflect.Float64:
+		if val.Float() == 0.0 {
+			return fmt.Errorf("input is required and cannot be zero")
+		}
+	case reflect.Bool:
+		if !val.Bool() {
+			return fmt.Errorf("input is required and cannot be false")
+		}
+	case reflect.Slice, reflect.Array:
+		if val.Len() == 0 {
+			return fmt.Errorf("input is required and cannot be empty")
+		}
+	case reflect.Struct:
+		for i := 0; i < val.NumField(); i++ {
+			field := val.Field(i)
+			if isZero(field) {
+				return fmt.Errorf("input is required and cannot be empty")
+			}
+		}
+	default:
+		return errors.New("unsupported type")
 	}
-	if strings.TrimSpace(str) == "" {
-		return fmt.Errorf("input is required and cannot be empty")
-	}
+
 	return nil
+}
+
+func isZero(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.String:
+		return v.String() == ""
+	case reflect.Bool:
+		return !v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return v.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0.0
+	case reflect.Slice, reflect.Array:
+		return v.Len() == 0
+	case reflect.Struct:
+		for i := 0; i < v.NumField(); i++ {
+			if !isZero(v.Field(i)) {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
+	}
 }
 
 // EmailValidator checks if the input string is a valid email address
 func EmailValidator(input interface{}, _ string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -40,6 +102,10 @@ func EmailValidator(input interface{}, _ string) error {
 
 // PhoneValidator checks if the input string is a valid international phone number
 func PhoneValidator(input interface{}, _ string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -53,6 +119,10 @@ func PhoneValidator(input interface{}, _ string) error {
 
 // StrongPasswordValidator ensures the password meets strength requirements
 func StrongPasswordValidator(input interface{}, _ string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -91,6 +161,10 @@ func StrongPasswordValidator(input interface{}, _ string) error {
 
 // DateValidator checks if the input string is a valid date in YYYY-MM-DD format
 func DateValidator(input interface{}, _ string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -104,6 +178,10 @@ func DateValidator(input interface{}, _ string) error {
 
 // TimeValidator checks if the input string is a valid time in HH:MM:SS format
 func TimeValidator(input interface{}, _ string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -117,6 +195,10 @@ func TimeValidator(input interface{}, _ string) error {
 
 // DatetimeValidator checks if the input string is a valid datetime in YYYY-MM-DD HH:MM:SS with timezone format
 func DatetimeValidator(input interface{}, _ string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -130,6 +212,10 @@ func DatetimeValidator(input interface{}, _ string) error {
 
 // UrlValidator checks if the input string is a valid URL
 func UrlValidator(input interface{}, _ string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -143,6 +229,10 @@ func UrlValidator(input interface{}, _ string) error {
 
 // IpValidator checks if the input string is a valid IP address
 func IpValidator(input interface{}, _ string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -155,6 +245,10 @@ func IpValidator(input interface{}, _ string) error {
 
 // MinLengthValidator checks if the input string's length is at least the specified minimum
 func MinLengthValidator(input interface{}, length string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -171,6 +265,9 @@ func MinLengthValidator(input interface{}, length string) error {
 
 // MaxLengthValidator checks if the input string's length does not exceed the specified maximum
 func MaxLengthValidator(input interface{}, length string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
 
 	str, ok := input.(string)
 	if !ok {
@@ -187,6 +284,10 @@ func MaxLengthValidator(input interface{}, length string) error {
 }
 
 func GreaterThanValidator(input interface{}, threshold string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	number, thresh, err := convertToFloat64(input, threshold)
 	if err != nil {
 		return err
@@ -198,6 +299,10 @@ func GreaterThanValidator(input interface{}, threshold string) error {
 }
 
 func LessThanValidator(input interface{}, threshold string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	number, thresh, err := convertToFloat64(input, threshold)
 	if err != nil {
 		return err
@@ -209,6 +314,10 @@ func LessThanValidator(input interface{}, threshold string) error {
 }
 
 func GreaterThanOrEqualValidator(input interface{}, threshold string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	number, thresh, err := convertToFloat64(input, threshold)
 	if err != nil {
 		return err
@@ -220,6 +329,10 @@ func GreaterThanOrEqualValidator(input interface{}, threshold string) error {
 }
 
 func LessThanOrEqualValidator(input interface{}, threshold string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	number, thresh, err := convertToFloat64(input, threshold)
 	if err != nil {
 		return err
@@ -232,6 +345,10 @@ func LessThanOrEqualValidator(input interface{}, threshold string) error {
 
 // EnumValidator checks if the input string is one of the allowed values
 func EnumValidator(input interface{}, allowedValues string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -247,6 +364,10 @@ func EnumValidator(input interface{}, allowedValues string) error {
 
 // BooleanValidator checks if the input is a boolean
 func BooleanValidator(input interface{}, _ string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	_, ok := input.(bool)
 	if !ok {
 		return fmt.Errorf("input must be a boolean")
@@ -256,6 +377,10 @@ func BooleanValidator(input interface{}, _ string) error {
 
 // ContainsValidator checks if the input string contains one of the allowed values
 func ContainsValidator(input interface{}, allowedValues string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -271,6 +396,10 @@ func ContainsValidator(input interface{}, allowedValues string) error {
 
 // NotContainsValidator checks if the input string does not contain any of the disallowed values
 func NotContainsValidator(input interface{}, disallowedValues string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("failed to map the input to a string")
@@ -286,6 +415,10 @@ func NotContainsValidator(input interface{}, disallowedValues string) error {
 
 // RangeValidator checks if a number is between two numbers specified with a dash (e.g., "10-100")
 func RangeValidator(input interface{}, rangeStr string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	val := reflect.ValueOf(input)
 	if val.Kind() != reflect.Int && val.Kind() != reflect.Float64 && val.Kind() != reflect.Float32 {
 		return fmt.Errorf("input must be a number")
@@ -323,6 +456,10 @@ func RangeValidator(input interface{}, rangeStr string) error {
 
 // StartsWidthValidator validates that a string starts with a specified substring
 func StartsWidthValidator(input interface{}, prefix string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("input must be a string")
@@ -335,6 +472,10 @@ func StartsWidthValidator(input interface{}, prefix string) error {
 
 // EndsWithValidator validates that a string ends with a specified substring
 func EndsWithValidator(input interface{}, suffix string) error {
+	if isEmptyOrNull(input) {
+		return nil
+	}
+
 	str, ok := input.(string)
 	if !ok {
 		return fmt.Errorf("input must be a string")
@@ -358,4 +499,29 @@ func convertToFloat64(input interface{}, threshold string) (float64, float64, er
 
 	number := val.Convert(reflect.TypeOf(thresh)).Float()
 	return number, thresh, nil
+}
+
+// IsEmptyOrNull checks if the input is empty or null for various types
+func isEmptyOrNull(input interface{}) bool {
+	if input == nil {
+		return true
+	}
+
+	v := reflect.ValueOf(input)
+
+	switch v.Kind() {
+	case reflect.String:
+		return v.String() == ""
+	case reflect.Array, reflect.Slice, reflect.Map, reflect.Chan:
+		return v.Len() == 0
+	case reflect.Ptr, reflect.Interface:
+		return v.IsNil()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return v.Int() == 0
+	case reflect.Struct:
+		return false
+	default:
+		return false
+	}
 }
