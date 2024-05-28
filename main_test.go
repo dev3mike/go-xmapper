@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/dev3mike/go-xmapper"
 )
@@ -940,5 +941,40 @@ func TestMapStructsStructSlicePointer(t *testing.T) {
 	}
 	if dest[1].NewName != "programming" {
 		t.Errorf("Failed to map array fields correctly, got: %+v, want: %+v", dest[1].NewName, "programming")
+	}
+}
+
+func TestMapStructsTimeFields(t *testing.T) {
+	type Source struct {
+		CreatedAt time.Time `json:"createdAt"`
+		UpdatedAt time.Time `json:"updatedAt"`
+	}
+
+	type Destination struct {
+		CreatedAt time.Time  `json:"createdAt"`
+		UpdatedAt *time.Time `json:"updatedAt"`
+	}
+
+	now := time.Now()
+	later := now.Add(time.Hour)
+
+	src := Source{
+		CreatedAt: now,
+		UpdatedAt: later,
+	}
+
+	var dest Destination
+	err := xmapper.MapStructs(&src, &dest)
+
+	if err != nil {
+		t.Errorf("Unexpected error when mapping time fields: %s", err)
+	}
+
+	if !dest.CreatedAt.Equal(now) {
+		t.Errorf("Failed to map CreatedAt field correctly, got: %v, want: %v", dest.CreatedAt, now)
+	}
+
+	if dest.UpdatedAt == nil || !dest.UpdatedAt.Equal(later) {
+		t.Errorf("Failed to map UpdatedAt field correctly, got: %v, want: %v", dest.UpdatedAt, later)
 	}
 }

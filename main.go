@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/dev3mike/go-xmapper/transformers"
 	"github.com/dev3mike/go-xmapper/validators"
@@ -75,16 +76,19 @@ func RegisterValidator(name string, f ValidatorFunc) {
 
 // MapStructs validate, transfor and maps data from source struct to destination struct
 func MapStructs(src, dest interface{}) error {
+
 	srcValue := reflect.ValueOf(src)
 	destValue := reflect.ValueOf(dest)
 	if !isValidStructPointer(srcValue) || !isValidStructPointer(destValue) {
 		return errors.New("both source and destination must be pointer to a struct")
 	}
+
 	return mapStructsRecursive(srcValue, destValue)
 }
 
 // MapSliceOfStructs iterate over the source slice and map each struct to the destination slice
 func MapSliceOfStructs(src, dest interface{}) error {
+
 	srcValue := reflect.ValueOf(src)
 	destValue := reflect.ValueOf(dest)
 
@@ -228,6 +232,7 @@ func mapStructsRecursive(srcVal, destVal reflect.Value) error {
 	for i := 0; i < srcFields.NumField(); i++ {
 		srcField := srcFields.Field(i)
 		fieldName := getFieldName(srcFields.Type().Field(i), "json")
+
 		if fieldName == "" {
 			continue
 		}
@@ -331,6 +336,23 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
 		destField = destField.Elem()
 	}
 
+	// Handle time.Time to time.Time conversion
+	if srcField.Type() == reflect.TypeOf(time.Time{}) && destField.Type() == reflect.TypeOf(time.Time{}) {
+		srcTime := srcField.Interface().(time.Time)
+		destField.Set(reflect.ValueOf(srcTime))
+		return nil
+	}
+
+	// Handle struct to JSON string conversion
+	if srcField.Kind() == reflect.Struct && destField.Kind() == reflect.String {
+		jsonBytes, err := json.Marshal(srcField.Interface())
+		if err != nil {
+			return err
+		}
+		destField.SetString(string(jsonBytes))
+		return nil
+	}
+
 	if srcField.Kind() == reflect.Struct && destField.Kind() == reflect.Struct {
 		return mapStructsRecursive(srcField.Addr(), destField.Addr())
 	}
@@ -368,16 +390,6 @@ func setFieldValue(srcField, destField reflect.Value, transformers []Transformer
 			return err
 		}
 		destField.Set(reflect.ValueOf(structValue).Elem())
-		return nil
-	}
-
-	// Handle struct to JSON string conversion
-	if srcField.Kind() == reflect.Struct && destField.Kind() == reflect.String {
-		jsonBytes, err := json.Marshal(srcField.Interface())
-		if err != nil {
-			return err
-		}
-		destField.SetString(string(jsonBytes))
 		return nil
 	}
 
