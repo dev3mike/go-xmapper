@@ -131,6 +131,13 @@ if err != nil {
 	fmt.Println("Oops! Something went wrong:", err)
 }
 ```
+
+**Map slice of structs**
+You can use MapSliceOfStructs to map slice of structs
+
+```go
+	xmapper.MapSliceOfStructs(&src, &dest)
+```
   
 
 3.  **Validate/Transform single values**: 

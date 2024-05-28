@@ -78,9 +78,39 @@ func MapStructs(src, dest interface{}) error {
 	srcValue := reflect.ValueOf(src)
 	destValue := reflect.ValueOf(dest)
 	if !isValidStructPointer(srcValue) || !isValidStructPointer(destValue) {
-		return fmt.Errorf("both source and destination must be pointer to a struct")
+		return errors.New("both source and destination must be pointer to a struct")
 	}
 	return mapStructsRecursive(srcValue, destValue)
+}
+
+// MapSliceOfStructs iterate over the source slice and map each struct to the destination slice
+func MapSliceOfStructs(src, dest interface{}) error {
+	srcValue := reflect.ValueOf(src)
+	destValue := reflect.ValueOf(dest)
+
+	if srcValue.Kind() != reflect.Pointer || srcValue.Elem().Kind() != reflect.Slice {
+		return errors.New("source must be a pointer to a slice")
+	}
+	if destValue.Kind() != reflect.Pointer || destValue.Elem().Kind() != reflect.Slice {
+		return errors.New("destination must be a pointer to a slice")
+	}
+
+	srcSlice := srcValue.Elem()
+	destElemType := destValue.Elem().Type().Elem().Elem()
+	destSlice := reflect.MakeSlice(reflect.SliceOf(reflect.PointerTo(destElemType)), srcSlice.Len(), srcSlice.Len())
+
+	for i := 0; i < srcSlice.Len(); i++ {
+		srcElem := srcSlice.Index(i)
+		destElem := reflect.New(destElemType)
+		err := MapStructs(srcElem.Interface(), destElem.Interface())
+		if err != nil {
+			return err
+		}
+		destSlice.Index(i).Set(destElem)
+	}
+
+	destValue.Elem().Set(destSlice)
+	return nil
 }
 
 // MapJsonStruct decodes a JSON string into the provided struct pointer and applies any necessary validations and transformations

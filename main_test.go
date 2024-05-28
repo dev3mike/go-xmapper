@@ -915,3 +915,30 @@ func TestValidateStructWithOptionalField(t *testing.T) {
 		t.Errorf("Expected no error for empty email, but got one: %s", err)
 	}
 }
+
+// TestMapStructsStructSlicePointer tests mapping structures that contain slice or array pointers.
+func TestMapStructsStructSlicePointer(t *testing.T) {
+	type Tag1 struct {
+		Name string `json:"name"`
+	}
+	type Tag2 struct {
+		NewName string `json:"name"`
+	}
+
+	tag1Data := &Tag1{Name: "go"}
+	tag2Data := &Tag1{Name: "programming"}
+
+	src := []*Tag1{tag1Data, tag2Data}
+	dest := []*Tag2{}
+
+	err := xmapper.MapSliceOfStructs(&src, &dest)
+	if err != nil {
+		t.Errorf("Unexpected error when mapping JSON string to slice: %s", err)
+	}
+	if dest[0].NewName != "go" {
+		t.Errorf("Failed to map array fields correctly, got: %+v, want: %+v", dest[0].NewName, "go")
+	}
+	if dest[1].NewName != "programming" {
+		t.Errorf("Failed to map array fields correctly, got: %+v, want: %+v", dest[1].NewName, "programming")
+	}
+}
