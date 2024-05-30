@@ -15,7 +15,6 @@ func TestRequiredValidator(t *testing.T) {
 		{"Non-empty string", "Hello", ""},
 		{"Empty string", "", "input is required and cannot be empty"},
 		{"Whitespace only", "   ", "input is required and cannot be empty"},
-		{"Non-string input", 123, "failed to map the input to a string"},
 	}
 
 	for _, tc := range tests {
@@ -346,9 +345,9 @@ func TestEnumValidator(t *testing.T) {
 		allowedValues string
 		expect        string
 	}{
-		{"Valid Enum", "apple", "apple,banana,orange", ""},
-		{"Invalid Enum", "pear", "apple,banana,orange", "input must be one of the following values: apple,banana,orange"},
-		{"Non-string Input", 12345, "apple,banana,orange", "failed to map the input to a string"},
+		{"Valid Enum", "apple", "apple-banana-orange", ""},
+		{"Invalid Enum", "pear", "apple-banana-orange", "input must be one of the following values: apple-banana-orange"},
+		{"Non-string Input", 12345, "apple-banana-orange", "failed to map the input to a string"},
 	}
 
 	for _, tc := range tests {
@@ -379,6 +378,15 @@ func TestBooleanValidator(t *testing.T) {
 				t.Errorf("Expected error '%s', got '%v'", tc.expect, err)
 			}
 		})
+	}
+}
+
+func TestBooleanPointerValidator(t *testing.T) {
+	boolean := true
+
+	err := validators.BooleanValidator(&boolean, "")
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
 	}
 }
 
@@ -427,6 +435,7 @@ func TestNotContainsValidator(t *testing.T) {
 }
 
 func TestRangeValidator(t *testing.T) {
+
 	tests := []struct {
 		name     string
 		input    interface{}

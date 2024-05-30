@@ -341,7 +341,7 @@ func BooleanValidator(input interface{}, _ string) error {
 		return nil
 	}
 
-	_, ok := input.(bool)
+	_, ok := dereferenceBool(input).(bool)
 	if !ok {
 		return fmt.Errorf("input must be a boolean")
 	}
@@ -515,4 +515,15 @@ func getString(input interface{}) (string, bool) {
 	}
 
 	return str, true
+}
+
+func dereferenceBool(input interface{}) interface{} {
+	val := reflect.ValueOf(input)
+	if val.Kind() == reflect.Ptr && val.Elem().Kind() == reflect.Bool {
+		if !val.IsNil() {
+			return val.Elem().Bool()
+		}
+		return nil // Return nil if the pointer is nil
+	}
+	return input
 }
